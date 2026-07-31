@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Admin Dashboard - BC Committee</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif; }
+    body { background: #F4F5F9; color: #1A1A1A; min-height: 100vh; padding-bottom: 20px; -webkit-tap-highlight-color: transparent; }
+    .admin-container { max-width: 560px; margin: 0 auto; background: #F4F5F9; min-height: 100vh; position: relative; }
+
+    /* ===== HEADER ===== */
+    .app-header { background: #0F172A; color: white; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+    .app-header .left { display: flex; align-items: center; gap: 14px; }
+    .app-header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+    .app-header .role { font-size: 0.7rem; opacity: 0.7; background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 100px; font-weight: 500; }
+    .app-header .actions { display: flex; align-items: center; gap: 14px; }
+    .app-header .actions button { background: none; border: none; color: white; cursor: pointer; padding: 4px; display: flex; align-items: center; font-size: 1.1rem; }
+
+    /* ===== PAGE CONTENT ===== */
+    .page { padding: 16px; display: none; animation: fadeIn 300ms ease-out; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== CARDS ===== */
+    .card { background: white; border-radius: 20px; border: 1px solid #F0F0F0; padding: 20px; margin-bottom: 16px; transition: all 0.2s ease; }
+    .card.clickable { cursor: pointer; }
+    .card.clickable:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+    /* ===== STATS GRID ===== */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .stat-card { background: white; border-radius: 16px; border: 1px solid #F0F0F0; padding: 14px 10px; text-align: center; }
+    .stat-card .icon { font-size: 1.4rem; margin-bottom: 4px; }
+    .stat-card .number { font-size: 1.3rem; font-weight: 800; color: #1A1A1A; }
+    .stat-card .label { font-size: 0.6rem; color: #6B6B6B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    .stat-card .number.green { color: #16A34A; }
+    .stat-card .number.blue { color: #3B82F6; }
+    .stat-card .number.amber { color: #F5A623; }
+    .stat-card .number.coral { color: #FF6B6B; }
+
+    /* ===== SECTION HEADING ===== */
+    .section-h { font-size: 0.95rem; font-weight: 700; color: #1A1A1A; margin: 16px 0 10px; display: flex; align-items: center; gap: 8px; }
+
+    /* ===== CYCLE CARD ===== */
+    .manage-item { background: white; border-radius: 20px; border: 1px solid #F0F0F0; padding: 18px; margin-bottom: 12px; animation: slideUp 300ms ease-out; }
+    .manage-item .top { display: flex; align-items: start; justify-content: space-between; margin-bottom: 12px; }
+    .manage-item .amount { font-size: 1.6rem; font-weight: 800; color: #1A1A1A; }
+    .manage-item .name { font-size: 0.8rem; color: #9B9B9B; margin-top: 2px; }
+    .status-badge { font-size: 0.72rem; font-weight: 700; padding: 4px 12px; border-radius: 8px; border: 1.5px solid; cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px; }
+    .status-badge.active { background: rgba(74,222,128,0.15); color: #166534; border-color: rgba(74,222,128,0.4); }
+    .status-badge.completed { background: rgba(59,130,246,0.15); color: #1E40AF; border-color: rgba(59,130,246,0.4); }
+    .status-badge.paused { background: rgba(245,158,11,0.15); color: #92400E; border-color: rgba(245,158,11,0.4); }
+    .manage-item .mid { display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid #F0F0F0; margin-bottom: 12px; font-size: 0.9rem; color: #6B6B6B; }
+    .manage-item .mid .amt { font-weight: 700; color: #1A1A1A; }
+    .manage-item .bot { display: flex; align-items: center; justify-content: space-between; }
+    .manage-item .members { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 600; color: #5B54D6; }
+
+    /* ===== FAB ===== */
+    .fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 18px; background: #B8A9E8; color: #1A1A1A; border: none; box-shadow: 0 4px 16px rgba(184,169,232,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 400; transition: all 0.2s; z-index: 40; }
+    .fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(184,169,232,0.7); }
+    @media (min-width: 560px) { .fab { right: calc(50% - 280px + 24px); } }
+
+    /* ===== NEW CYCLE FORM ===== */
+    .form-field { margin-bottom: 18px; }
+    .form-field .label { font-size: 0.8rem; color: #6B6B6B; font-weight: 500; margin-bottom: 4px; }
+    .form-field input[type="text"], .form-field input[type="number"], .form-field input[type="date"] {
+      width: 100%; background: transparent; border: none; border-bottom: 1px solid #E0E0E0; padding: 8px 2px;
+      font-size: 1.3rem; font-weight: 700; color: #1A1A1A; outline: none; transition: border-color 0.2s;
+    }
+    .form-field input:focus { border-color: #5B54D6; }
+    .form-field input::placeholder { color: #9B9B9B; font-weight: 400; font-size: 1rem; }
+    .date-field { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #E0E0E0; padding: 12px 0; margin-bottom: 18px; }
+    .date-field .info { flex: 1; }
+    .date-field .lbl { font-size: 1.05rem; color: #1A1A1A; font-weight: 500; }
+    .date-field .val { font-size: 0.85rem; color: #6B6B6B; margin-top: 2px; }
+    .summary-card { background: rgba(91,84,214,0.05); border: 1px solid rgba(91,84,214,0.2); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+    .summary-card .slbl { font-size: 0.65rem; color: #6B6B6B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .summary-card .sval { font-size: 1.5rem; font-weight: 800; color: #5B54D6; margin-top: 2px; }
+    .summary-card .shint { font-size: 0.75rem; color: #6B6B6B; margin-top: 4px; }
+
+    .primary-btn { width: 100%; padding: 14px; background: #5B54D6; color: white; border: none; border-radius: 100px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(91,84,214,0.3); display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .primary-btn:hover { background: #4A44C0; box-shadow: 0 4px 16px rgba(91,84,214,0.4); }
+    .primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .primary-btn.danger { background: #EF4444; box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
+    .primary-btn.danger:hover { background: #DC2626; }
+    .btn-sm { padding: 5px 12px; font-size: 0.7rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
+    .btn-approve { background: #16A34A; color: white; }
+    .btn-reject { background: #EF4444; color: white; }
+    .btn-outline-sm { background: transparent; border: 1px solid #E0E0E0; color: #6B6B6B; padding: 4px 10px; font-size: 0.7rem; border-radius: 8px; cursor: pointer; }
+
+    /* ===== TABS ===== */
+    .tabs { display: flex; gap: 6px; background: rgba(240,240,240,0.6); border-radius: 100px; padding: 4px; width: fit-content; margin: 0 auto 16px; }
+    .tabs button { background: transparent; border: none; padding: 8px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 600; color: #6B6B6B; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
+    .tabs button.active { background: white; color: #1A1A1A; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
+
+    /* ===== MEMBER ROW ===== */
+    .member-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #F0F0F0; transition: background 0.15s; }
+    .member-row:last-child { border-bottom: none; }
+    .member-row.current { background: rgba(91,84,214,0.05); }
+    .member-pos { width: 36px; height: 36px; border-radius: 50%; background: rgba(184,169,232,0.2); color: #5B21B6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+    .member-info { flex: 1; min-width: 0; }
+    .member-name { font-size: 0.85rem; font-weight: 600; color: #1A1A1A; }
+    .member-phone { font-size: 0.7rem; color: #9B9B9B; }
+    .turn-badge { font-size: 0.62rem; font-weight: 700; padding: 3px 9px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.3px; border: 1px solid; }
+    .turn-badge.received { background: rgba(74,222,128,0.15); color: #166534; border-color: rgba(74,222,128,0.4); }
+    .turn-badge.current { background: rgba(59,130,246,0.15); color: #1E40AF; border-color: rgba(59,130,246,0.4); }
+    .turn-badge.pending { background: rgba(245,158,11,0.15); color: #92400E; border-color: rgba(245,158,11,0.4); }
+
+    /* ===== PAYMENT ROW ===== */
+    .payment-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #F0F0F0; }
+    .payment-row:last-child { border-bottom: none; }
+
+    /* ===== MODAL / OVERLAY ===== */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal-box { background: white; border-radius: 20px; padding: 24px; max-width: 420px; width: 100%; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
+    .modal-box h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; }
+
+    /* ===== BANK ===== */
+    .bank-box { background: #F8FAFC; border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 0.85rem; border: 1px solid #E9EDF2; }
+    .bank-box p { margin: 4px 0; }
+
+    /* ===== TOAST ===== */
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1A1A1A; color: white; padding: 10px 20px; border-radius: 100px; font-weight: 600; z-index: 200; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.3); max-width: 90%; font-size: 0.85rem; }
+    .toast.success { background: #16A34A; }
+    .toast.error { background: #EF4444; }
+
+    /* ===== EMPTY ===== */
+    .empty { padding: 40px 20px; text-align: center; }
+    .empty .emoji { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5; }
+    .empty .text { font-size: 0.85rem; color: #9B9B9B; }
+
+    /* ===== CYCLES LIST IN DASHBOARD ===== */
+    .cycle-dash-card { padding: 14px 16px; border-bottom: 1px solid #F0F0F0; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; }
+    .cycle-dash-card:last-child { border-bottom: none; }
+    .cycle-dash-card:hover { background: #FAFAF8; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th, td { padding: 8px 6px; border-bottom: 1px solid #F0F0F0; text-align: left; }
+    th { font-size: 0.62rem; text-transform: uppercase; color: #9B9B9B; font-weight: 600; }
+    .trun { font-size: 0.7rem; font-family: monospace; }
+
+    /* ===== AUTH ===== */
+    .auth-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .auth-box { background: white; border-radius: 20px; padding: 30px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 16px 48px rgba(0,0,0,0.3); }
+    .auth-box h2 { color: #5B54D6; margin-bottom: 20px; font-size: 1.3rem; }
+    .auth-box input { width: 100%; padding: 12px; border: 1px solid #E0E0E0; border-radius: 12px; margin-bottom: 12px; font-size: 1rem; text-align: center; }
+    .auth-box .error { color: #EF4444; font-size: 0.8rem; margin-top: 8px; }
+
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- ADMIN LOGIN OVERLAY -->
+  <div class="auth-overlay" id="adminLoginOverlay">
+    <div class="auth-box">
+      <h2>🔐 Admin Login</h2>
+      <form id="adminLoginForm">
+        <input type="password" id="adminPassword" placeholder="Password" required autocomplete="off">
+        <button type="submit" class="primary-btn">Login</button>
+        <p class="error" id="adminLoginError"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN ADMIN CONTENT -->
+  <div id="adminContent" class="admin-container" style="display:none;">
+
+    <!-- ===== DASHBOARD PAGE ===== -->
+    <div id="page-dashboard" class="page active">
+      <div class="app-header" style="margin:-16px -16px 16px;">
+        <div class="left">
+          <h1>⚡ Admin</h1>
+          <span class="role">Dashboard</span>
+        </div>
+        <div class="actions">
+          <button onclick="navigate('bank')" title="Bank">🏦</button>
+          <button onclick="logoutAdmin()" title="Logout">🚪</button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="icon">💰</div>
+          <div class="number green" id="admTotalCollected">₹0</div>
+          <div class="label">Total Collected</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">👥</div>
+          <div class="number" id="admTotalUsers">0</div>
+          <div class="label">Total Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">🔄</div>
+          <div class="number blue" id="admActiveCycles">0</div>
+          <div class="label">Active Cycles</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">✅</div>
+          <div class="number green" id="admApprovedPayments">0</div>
+          <div class="label">Approved</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">⏳</div>
+          <div class="number amber" id="admPendingPayments">0</div>
+          <div class="label">Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">📆</div>
+          <div class="number coral" id="admThisMonth">₹0</div>
+          <div class="label">This Month</div>
+        </div>
+      </div>
+
+      <!-- CYCLES OVERVIEW -->
+      <div class="section-h">📊 Cycles Overview</div>
+      <div class="card" style="padding:0;">
+        <div id="cyclesDashboardList"></div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="section-h">⚡ Quick Actions</div>
+      <button class="card clickable" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;" onclick="navigate('manage')">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(74,222,128,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🔄</div>
+        <span style="flex:1;font-weight:600;">Manage Cycles</span>
+        <span style="color:#9B9B9B;">›</span>
+      </button>
+      <button class="card clickable" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;" onclick="navigate('payments')">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(245,166,35,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">💳</div>
+        <span style="flex:1;font-weight:600;">All Payments</span>
+        <span style="color:#9B9B9B;">›</span>
+      </button>
+    </div>
+
+    <!-- ===== MANAGE CYCLES PAGE ===== -->
+    <div id="page-manage" class="page">
+      <div class="app-header" style="margin:-16px -16px 16px;">
+        <div class="left">
+          <button class="back-btn" onclick="navigate('dashboard')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
+          <h1>Manage Cycles</h1>
+        </div>
+      </div>
+      <div id="manageCyclesList"></div>
+      <button class="fab" onclick="navigate('new-cycle')">+</button>
+    </div>
+
+    <!-- ===== NEW CYCLE PAGE ===== -->
+    <div id="page-new-cycle" class="page">
+      <div class="app-header" style="margin:-16px -16px 16px;">
+        <div class="left">
+          <button class="back-btn" onclick="navigate('manage')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
+          <h1>New Cycle</h1>
+        </div>
+      </div>
+      <form id="newCycleForm" style="padding:4px;">
+        <div class="form-field">
+          <input type="text" id="ncName" placeholder="Cycle Name (e.g., Batch A 2026)">
+        </div>
+        <div class="date-field">
+          <div class="info">
+            <div class="lbl">Start Date</div>
+            <div class="val" id="ncStartDateDisplay">Select date</div>
+          </div>
+          <label style="position:relative;cursor:pointer;font-size:1.4rem;">📅
+            <input type="date" id="ncStartDate" onchange="updateStartDateDisplay()" style="position:absolute;inset:0;opacity:0;">
+          </label>
+        </div>
+        <div class="form-field"><div class="label">Monthly Amount (₹)</div><input type="number" id="ncMonthlyAmount" min="1" value="2500" oninput="updateSummary()" required></div>
+        <div class="form-field"><div class="label">Total Members</div><input type="number" id="ncTotalMembers" min="2" value="20" oninput="updateSummary()" required></div>
+        <div class="form-field"><div class="label">Duration (Months)</div><input type="number" id="ncDuration" min="1" value="20" oninput="updateSummary()" required></div>
+        <div class="summary-card">
+          <div class="slbl">Total Pot</div>
+          <div class="sval" id="ncSummaryVal">₹50000</div>
+          <div class="shint" id="ncSummaryHint">20 × ₹2500 × 20 months</div>
+        </div>
+        <button type="submit" class="primary-btn" id="ncSubmitBtn">Create Cycle</button>
+      </form>
+    </div>
+
+    <!-- ===== CYCLE DETAIL PAGE ===== -->
+    <div id="page-cycle-detail" class="page">
+      <div class="app-header" style="margin:-16px -16px 16px;">
+        <div class="left">
+          <button class="back-btn" onclick="navigate('manage')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
+          <h1 id="cdTitle">Cycle</h1>
+        </div>
+        <div class="actions">
+          <button onclick="toggleCycleStatus()" title="Toggle Status">🔄</button>
+          <button onclick="deleteCurrentCycle()" title="Delete">🗑️</button>
+        </div>
+      </div>
+
+      <!-- Cycle Summary -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:start;">
+          <div>
+            <div style="font-size:0.65rem;color:#9B9B9B;font-weight:600;text-transform:uppercase;">Total Pot</div>
+            <div style="font-size:1.6rem;font-weight:800;color:#1A1A1A;" id="cdTotalPot">₹0</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.65rem;color:#9B9B9B;font-weight:600;text-transform:uppercase;">Progress</div>
+            <div style="font-size:1.6rem;font-weight:800;color:#5B54D6;" id="cdProgress">0%</div>
+          </div>
+        </div>
+        <div style="width:100%;height:8px;background:#F0F0F0;border-radius:20px;overflow:hidden;margin-top:8px;">
+          <div id="cdProgressFill" style="height:100%;background:#5B54D6;border-radius:20px;transition:width 0.6s ease;width:0%;"></div>
+        </div>
+        <div class="stats-grid" style="margin-top:12px;padding-top:12px;border-top:1px solid #F0F0F0;margin-bottom:0;">
+          <div class="stat-card"><div class="icon">💰</div><div class="number" id="cdMonthly">₹0</div><div class="label">Monthly</div></div>
+          <div class="stat-card"><div class="icon">👥</div><div class="number" id="cdMembersCount">0</div><div class="label">Members</div></div>
+          <div class="stat-card"><div class="icon">📅</div><div class="number" id="cdDuration">0</div><div class="label">Months</div></div>
+        </div>
+      </div>
+
+      <!-- Members & Payments Tabs -->
+      <div class="tabs">
+        <button class="active" onclick="switchDetailTab('members',this)">👥 Members</button>
+        <button onclick="switchDetailTab('payments',this)">💳 Payments</button>
+      </div>
+
+      <div class="card" id="cdMembersCard" style="padding:0;"></div>
+      <div class="card" id="cdPaymentsCard" style="padding:0;display:none;"></div>
+    </div>
+
+    <!-- ===== ALL PAYMENTS PAGE ===== -->
+    <div id="page-payments" class="page">
+      <div class="app-header" style="margin:-16px -16px 16px;">
+        <div class="left">
+          <button class="back-btn" onclick="navigate('dashboard')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
+          <h1>All Payments</h1>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="active" onclick="filterPayments('all', this)">All</button>
+        <button onclick="filterPayments('Pending', this)">⏳ Pending</button>
+        <button onclick="filterPayments('Approved', this)">✅ Approved</button>
+      </div>
+      <div class="card" style="padding:0;" id="allPaymentsList"></div>
+    </div>
+
+    <!-- ===== BANK DETAILS PAGE ===== -->
+    <div id="page-bank" class="page">
+      <div class="app-header" style="margin:-16px -16px 16px;">
+        <div class="left">
+          <button class="back-btn" onclick="navigate('dashboard')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
+          <h1>Bank Details</h1>
+        </div>
+      </div>
+      <div class="card">
+        <form id="bankForm">
+          <div class="form-field">
+            <div class="label">UPI ID</div>
+            <input type="text" id="bankUpi" placeholder="example@upi">
+          </div>
+          <div class="form-field">
+            <div class="label">Account Name</div>
+            <input type="text" id="bankAccName" placeholder="John Doe">
+          </div>
+          <div class="form-field">
+            <div class="label">Account Number</div>
+            <input type="text" id="bankAccNo" placeholder="1234567890">
+          </div>
+          <div class="form-field">
+            <div class="label">IFSC Code</div>
+            <input type="text" id="bankIfsc" placeholder="SBIN0001234">
+          </div>
+          <button type="submit" class="primary-btn">💾 Save</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDT1Gl3Z_mLFaY6i0e01TKX3YUtVrplew8",
+      authDomain: "my-hellping.firebaseapp.com",
+      databaseURL: "https://my-hellping-default-rtdb.firebaseio.com",
+      projectId: "my-hellping",
+      storageBucket: "my-hellping.firebasestorage.app",
+      messagingSenderId: "537498438505",
+      appId: "1:537498438505:web:204dc1653c612edc75cbf8"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const ADMIN_PASSWORD = "admin123";
+    let allData = { users: {}, cycles: {}, bids: {}, bankDetails: {} };
+    let currentCycleDetail = null;
+    let paymentFilter = 'all';
+
+    // ===== HELPERS =====
+    function showToast(msg, kind='success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast ' + kind;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2800);
+    }
+    function fmtINR(n) { return '₹' + Number(n||0).toLocaleString('en-IN'); }
+    function fmtMonthYear(s) {
+      if (!s) return '-';
+      try { const d = new Date(s); if (isNaN(d)) return s; return d.toLocaleString('default',{month:'short',year:'numeric'}); }
+      catch { return s; }
+    }
+    function getCurrentMonth() {
+      const m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const d = new Date(); return m[d.getMonth()] + " " + d.getFullYear();
+    }
+    function getCyclesArray() {
+      return Object.entries(allData.cycles||{}).map(([id,c]) => ({id,...c}));
+    }
+    function calcCycleCollection(cycle) {
+      const payments = cycle.payments || {};
+      return Object.values(payments).filter(p=>p.status==='Approved').reduce((s,p)=>s+Number(p.amount||0),0);
+    }
+
+    // ===== NAVIGATION =====
+    window.navigate = function(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const t = document.getElementById('page-'+pageId);
+      if (t) t.classList.add('active');
+      window.scrollTo({top:0,behavior:'smooth'});
+      if (pageId==='dashboard') renderDashboard();
+      else if (pageId==='manage') renderManage();
+      else if (pageId==='new-cycle') resetNewCycleForm();
+      else if (pageId==='payments') renderAllPayments();
+      else if (pageId==='bank') fillBankForm();
+    };
+
+    // ===== ADMIN LOGIN =====
+    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('adminPassword').value;
+      if (pwd === ADMIN_PASSWORD) {
+        document.getElementById('adminLoginOverlay').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        sessionStorage.setItem('admin_logged', '1');
+        startListening();
+      } else {
+        document.getElementById('adminLoginError').textContent = '❌ Wrong password!';
+      }
+    });
+    window.logoutAdmin = function() {
+      sessionStorage.removeItem('admin_logged');
+      location.reload();
+    };
+
+    // Auto-login if previously logged in
+    if (sessionStorage.getItem('admin_logged') === '1') {
+      document.getElementById('adminLoginOverlay').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      startListening();
+    }
+
+    // ===== REAL-TIME DATA =====
+    function startListening() {
+      onValue(ref(db), (snap) => {
+        if (!snap.exists()) { allData = {users:{},cycles:{},bids:{},bankDetails:{}}; }
+        else {
+          const d = snap.val();
+          allData = { users: d.users||{}, cycles: d.cycles||{}, bids: d.bids||{}, bankDetails: d.bankDetails||{} };
+        }
+        // Re-render active page
+        const ap = document.querySelector('.page.active');
+        if (ap) {
+          const id = ap.id.replace('page-','');
+          if (id==='dashboard') renderDashboard();
+          else if (id==='manage') renderManage();
+          else if (id==='payments') renderAllPayments();
+          else if (id==='cycle-detail' && currentCycleDetail) renderCycleDetail(currentCycleDetail);
+          else if (id==='bank') fillBankForm();
+        }
+      });
+    }
+
+    // ===== DASHBOARD =====
+    function renderDashboard() {
+      const cycles = getCyclesArray();
+      const active = cycles.filter(c=>(c.status||'Active')==='Active');
+      const completed = cycles.filter(c=>c.status==='Completed');
+
+      // Stats
+      document.getElementById('admTotalUsers').innerText = Object.keys(allData.users||{}).length;
+      document.getElementById('admActiveCycles').innerText = active.length;
+
+      let totalCollected = 0, thisMonth = 0, approvedCnt = 0, pendingCnt = 0;
+      cycles.forEach(c => {
+        Object.values(c.payments||{}).forEach(p => {
+          if (p.status==='Approved') {
+            totalCollected += Number(p.amount||0); approvedCnt++;
+            if (p.month===getCurrentMonth()) thisMonth += Number(p.amount||0);
+          } else if (p.status==='Pending') pendingCnt++;
+        });
+      });
+      document.getElementById('admTotalCollected').innerText = fmtINR(totalCollected);
+      document.getElementById('admApprovedPayments').innerText = approvedCnt;
+      document.getElementById('admPendingPayments').innerText = pendingCnt;
+      document.getElementById('admThisMonth').innerText = fmtINR(thisMonth);
+
+      // Cycles overview
+      const listEl = document.getElementById('cyclesDashboardList');
+      listEl.innerHTML = '';
+      if (cycles.length === 0) {
+        listEl.innerHTML = `<div class="empty"><div class="emoji">🔄</div><div class="text">No cycles yet</div></div>`;
+      } else {
+        // Active first, then completed
+        const sorted = [...active, ...completed];
+        sorted.forEach(c => {
+          const s = c.status||'Active';
+          const sc = s==='Active'?'active':s==='Completed'?'completed':'paused';
+          const monthlyPot = Number(c.monthlyAmount||0) * Number(c.totalMembers||0);
+          const coll = calcCycleCollection(c);
+          const pct = monthlyPot>0 ? Math.min(100,Math.round((coll/monthlyPot)*100)) : 0;
+          listEl.innerHTML += `
+            <div class="cycle-dash-card" onclick="openCycleDetail('${c.id}')">
+              <div style="flex:1;">
+                <div style="font-weight:700;font-size:0.95rem;">${c.name||'Unnamed'}</div>
+                <div style="font-size:0.75rem;color:#6B6B6B;">${fmtINR(c.monthlyAmount)} / member • ${c.totalMembers} members</div>
+                <div style="margin-top:4px;height:4px;background:#F0F0F0;border-radius:10px;overflow:hidden;max-width:120px;">
+                  <div style="height:100%;background:#5B54D6;border-radius:10px;width:${pct}%;"></div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-weight:800;font-size:1.05rem;">${monthlyPot.toLocaleString('en-IN')}</div>
+                <span class="status-badge ${s}">${s}</span>
+              </div>
+            </div>
+          `;
+        });
+      }
+    }
+
+    // ===== MANAGE CYCLES =====
+    function renderManage() {
+      const cycles = getCyclesArray();
+      const list = document.getElementById('manageCyclesList');
+      list.innerHTML = '';
+      if (cycles.length===0) {
+        list.innerHTML = `<div class="card"><div class="empty"><div class="emoji">🔄</div><div class="text">Koi cycle nahi</div></div></div>`;
+        return;
+      }
+      cycles.forEach(c => {
+        const s = c.status||'Active';
+        const sc = s==='Active'?'active':s==='Completed'?'completed':'paused';
+        const monthlyTarget = Number(c.monthlyAmount||0) * Number(c.totalMembers||0);
+        list.innerHTML += `
+          <div class="manage-item">
+            <div class="top">
+              <div onclick="openCycleDetail('${c.id}')" style="cursor:pointer;flex:1;">
+                <div class="amount">${monthlyTarget.toLocaleString('en-IN')}</div>
+                <div class="name">${c.name||'Unnamed Cycle'}</div>
+              </div>
+              <span class="status-badge ${sc}" onclick="toggleCycleStatusExternal('${c.id}')">${s}</span>
+            </div>
+            <div class="mid">
+              <div>📅 Start: ${fmtMonthYear(c.startDate)}</div>
+              <div>💰 <span class="amt">${fmtINR(c.monthlyAmount)}</span></div>
+            </div>
+            <div class="bot">
+              <div class="members">👥 ${c.totalMembers} Members • ${c.durationMonths}m</div>
+              <button onclick="deleteCycleExternal('${c.id}','${(c.name||'Cycle').replace(/'/g,"\\\'")}')" style="background:none;border:none;color:#FF6B6B;cursor:pointer;font-size:1.2rem;">🗑️</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // ===== NEW CYCLE FORM =====
+    function resetNewCycleForm() {
+      document.getElementById('ncName').value = '';
+      document.getElementById('ncStartDate').value = new Date().toISOString().slice(0,10);
+      document.getElementById('ncMonthlyAmount').value = 2500;
+      document.getElementById('ncTotalMembers').value = 20;
+      document.getElementById('ncDuration').value = 20;
+      updateStartDateDisplay();
+      updateSummary();
+    }
+    window.updateStartDateDisplay = function() {
+      const v = document.getElementById('ncStartDate').value;
+      document.getElementById('ncStartDateDisplay').innerText = v ? fmtMonthYear(v) : 'Select date';
+    };
+    window.updateSummary = function() {
+      const a = Number(document.getElementById('ncMonthlyAmount').value)||0;
+      const m = Number(document.getElementById('ncTotalMembers').value)||0;
+      const d = Number(document.getElementById('ncDuration').value)||0;
+      const t = a*m*d;
+      document.getElementById('ncSummaryVal').innerText = fmtINR(t);
+      document.getElementById('ncSummaryHint').innerText = `${m} × ${fmtINR(a)} × ${d} months`;
+    };
+
+    document.getElementById('newCycleForm').addEventListener('submit', async(e) => {
+      e.preventDefault();
+      const btn = document.getElementById('ncSubmitBtn');
+      const name = document.getElementById('ncName').value.trim()||'Cycle '+ (Object.keys(allData.cycles).length+1);
+      const startDate = document.getElementById('ncStartDate').value||new Date().toISOString().slice(0,10);
+      const ma = Number(document.getElementById('ncMonthlyAmount').value);
+      const tm = Number(document.getElementById('ncTotalMembers').value);
+      const dm = Number(document.getElementById('ncDuration').value);
+      if (!ma||ma<1) return showToast('Monthly amount daalein','error');
+      if (!tm||tm<2) return showToast('Min 2 members','error');
+      btn.disabled=true; btn.innerText='⏳ Creating...';
+      try {
+        const newRef = push(ref(db, 'cycles'));
+        await set(newRef, {name,startDate,monthlyAmount:ma,totalMembers:tm,durationMonths:dm,status:'Active',createdAt:Date.now(),members:{},payments:{}});
+        showToast('✅ Cycle created!'); navigate('manage');
+      } catch(err) { showToast('❌ '+err.message,'error'); }
+      finally { btn.disabled=false; btn.innerText='Create Cycle'; }
+    });
+
+    // ===== CYCLE DETAIL =====
+    window.openCycleDetail = function(cid) {
+      currentCycleDetail = cid;
+      renderCycleDetail(cid);
+      navigate('cycle-detail');
+    };
+    function renderCycleDetail(cid) {
+      const c = allData.cycles[cid];
+      if (!c) return;
+      document.getElementById('cdTitle').innerText = c.name||'Cycle';
+      const totalPot = Number(c.monthlyAmount||0)*Number(c.totalMembers||0)*Number(c.durationMonths||1);
+      const collected = calcCycleCollection(c);
+      const pct = totalPot>0 ? Math.min(100,Math.round((collected/totalPot)*100)) : 0;
+      document.getElementById('cdTotalPot').innerText = fmtINR(totalPot);
+      document.getElementById('cdProgress').innerText = pct+'%';
+      document.getElementById('cdProgressFill').style.width = pct+'%';
+      document.getElementById('cdMonthly').innerText = fmtINR(c.monthlyAmount);
+      document.getElementById('cdMembersCount').innerText = c.totalMembers||0;
+      document.getElementById('cdDuration').innerText = c.durationMonths||0;
+
+      // Members
+      const membersEl = document.getElementById('cdMembersCard');
+      const members = c.members||{};
+      const memberArr = Object.entries(members).map(([uid,m])=>({uid,...m})).sort((a,b)=>(a.position||0)-(b.position||0));
+      if (memberArr.length===0) {
+        membersEl.innerHTML = `<div class="empty"><div class="emoji">👥</div><div class="text">Koi member nahi</div></div>`;
+      } else {
+        membersEl.innerHTML = memberArr.map(m => {
+          const s = m.turnStatus||'Pending';
+          const cls = s==='Received'?'received':s==='Current'?'current':'pending';
+          return `<div class="member-row ${s==='Current'?'current':''}">
+            <div class="member-pos">#${m.position||'?'}</div>
+            <div class="member-info"><div class="member-name">${m.name||'Unknown'} ${s==='Current'?'👑':''}</div><div class="member-phone">${m.phone||'-'}</div></div>
+            <span class="turn-badge ${cls}">${s}</span>
+          </div>`;
+        }).join('');
+      }
+
+      // Payments
+      const payEl = document.getElementById('cdPaymentsCard');
+      const payments = c.payments||{};
+      const payArr = Object.entries(payments).map(([id,p])=>({id,...p})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+      if (payArr.length===0) {
+        payEl.innerHTML = `<div class="empty"><div class="emoji">💳</div><div class="text">Koi payment nahi</div></div>`;
+      } else {
+        payEl.innerHTML = payArr.map(p => {
+          const s = p.status||'Pending';
+          const cls = s==='Approved'?'received':'pending';
+          return `<div class="member-row">
+            <div class="member-pos" style="background:rgba(74,222,128,0.15);color:#166534;">💰</div>
+            <div class="member-info"><div class="member-name">${p.userName||'Unknown'}</div><div class="member-phone">${p.month} • UTR: ${p.utr||'--'}</div></div>
+            <div style="text-align:right;">
+              <div style="font-weight:700;font-size:0.85rem;">${fmtINR(p.amount)}</div>
+              <span class="turn-badge ${cls}" style="margin-top:2px;display:inline-block;">${s}</span>
+              ${s==='Pending' ? `<div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;">
+                <button class="btn-sm btn-approve" onclick="approveCyclePayment('${cid}','${p.id}')">✅</button>
+                <button class="btn-sm btn-reject" onclick="rejectCyclePayment('${cid}','${p.id}')">❌</button>
+              </div>` : ''}
+            </div>
+          </div>`;
+        }).join('');
+      }
+    }
+    window.switchDetailTab = function(tab, btn) {
+      document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('cdMembersCard').style.display = tab==='members'?'block':'none';
+      document.getElementById('cdPaymentsCard').style.display = tab==='payments'?'block':'none';
+    };
+
+    // ===== CYCLE ACTIONS =====
+    window.toggleCycleStatus = async function() {
+      if (!currentCycleDetail) return;
+      const c = allData.cycles[currentCycleDetail];
+      if (!c) return;
+      const ns = (c.status||'Active')==='Active'?'Completed':'Active';
+      try { await update(ref(db, 'cycles/'+currentCycleDetail), {status:ns}); showToast('✅ Status: '+ns); }
+      catch(e) { showToast('❌ '+e.message,'error'); }
+    };
+    window.toggleCycleStatusExternal = async function(id) {
+      const c = allData.cycles[id];
+      if (!c) return;
+      const ns = (c.status||'Active')==='Active'?'Completed':'Active';
+      try { await update(ref(db, 'cycles/'+id), {status:ns}); showToast('✅ Status: '+ns); }
+      catch(e) { showToast('❌ '+e.message,'error'); }
+    };
+    window.deleteCurrentCycle = async function() {
+      const c = allData.cycles[currentCycleDetail];
+      if (!c || !confirm(`"${c.name||'Cycle'}" delete karna hai?`)) return;
+      try { await remove(ref(db, 'cycles/'+currentCycleDetail)); showToast('🗑️ Deleted'); navigate('manage'); }
+      catch(e) { showToast('❌ '+e.message,'error'); }
+    };
+    window.deleteCycleExternal = async function(id, name) {
+      if (!confirm(`"${name}" delete karna hai?`)) return;
+      try { await remove(ref(db, 'cycles/'+id)); showToast('🗑️ Deleted'); }
+      catch(e) { showToast('❌ '+e.message,'error'); }
+    };
+
+    // ===== PAYMENT ACTIONS =====
+    window.approveCyclePayment = async function(cid, pid) {
+      try { await update(ref(db, `cycles/${cid}/payments/${pid}`), {status:'Approved'}); showToast('✅ Approved'); }
+      catch(e) { showToast('❌ '+e.message,'error'); }
+    };
+    window.rejectCyclePayment = async function(cid, pid) {
+      try { await update(ref(db, `cycles/${cid}/payments/${pid}`), {status:'Rejected'}); showToast('❌ Rejected'); }
+      catch(e) { showToast('❌ '+e.message,'error'); }
+    };
+
+    // ===== ALL PAYMENTS PAGE =====
+    window.filterPayments = function(f, btn) {
+      paymentFilter = f;
+      document.querySelectorAll('#page-payments .tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAllPayments();
+    };
+    function renderAllPayments() {
+      const list = document.getElementById('allPaymentsList');
+      const cycles = getCyclesArray();
+      let allPays = [];
+      cycles.forEach(c => {
+        Object.entries(c.payments||{}).forEach(([pid,p]) => {
+          allPays.push({id:pid, cycleId:c.id, cycleName:c.name, ...p});
+        });
+      });
+      allPays.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+
+      if (paymentFilter!=='all') allPays = allPays.filter(p=>(p.status||'Pending')===paymentFilter);
+
+      list.innerHTML = '';
+      if (allPays.length===0) {
+        list.innerHTML = `<div class="empty"><div class="emoji">💳</div><div class="text">Koi payments nahi</div></div>`;
+        return;
+      }
+      allPays.forEach(p => {
+        const s = p.status||'Pending';
+        const cls = s==='Approved'?'received':'pending';
+        list.innerHTML += `<div class="member-row">
+          <div class="member-pos" style="background:rgba(74,222,128,0.15);color:#166534;">💰</div>
+          <div class="member-info">
+            <div class="member-name">${p.userName||'Unknown'} <span style="font-size:0.7rem;color:#9B9B9B;">(${p.cycleName||'--'})</span></div>
+            <div class="member-phone">${p.month} • UTR: ${p.utr||'--'} | ${p.userPhone||''}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700;font-size:0.85rem;">${fmtINR(p.amount)}</div>
+            <span class="turn-badge ${cls}" style="margin-top:2px;display:inline-block;">${s}</span>
+            ${s==='Pending'?`<div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;">
+              <button class="btn-sm btn-approve" onclick="approveCyclePayment('${p.cycleId}','${p.id}')">✅</button>
+              <button class="btn-sm btn-reject" onclick="rejectCyclePayment('${p.cycleId}','${p.id}')">❌</button>
+            </div>`:''}
+          </div>
+        </div>`;
+      });
+    }
+
+    // ===== BANK =====
+    function fillBankForm() {
+      const bd = allData.bankDetails||{};
+      document.getElementById('bankUpi').value = bd.upi||'';
+      document.getElementById('bankAccName').value = bd.accName||'';
+      document.getElementById('bankAccNo').value = bd.accNo||'';
+      document.getElementById('bankIfsc').value = bd.ifsc||'';
+    }
+    document.getElementById('bankForm').addEventListener('submit', async(e) => {
+      e.preventDefault();
+      try {
+        await set(ref(db, 'bankDetails'), {
+          upi: document.getElementById('bankUpi').value,
+          accName: document.getElementById('bankAccName').value,
+          accNo: document.getElementById('bankAccNo').value,
+          ifsc: document.getElementById('bankIfsc').value
+        });
+        showToast('✅ Bank details saved!');
+      } catch(err) { showToast('❌ '+err.message,'error'); }
+    });
+  </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b"}' crossorigin="anonymous"></script>
+</body>
+</html>
