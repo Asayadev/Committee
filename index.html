@@ -51,7 +51,7 @@
     .manage-item .name { font-size: 0.8rem; color: #9B9B9B; margin-top: 2px; }
     .status-badge { font-size: 0.72rem; font-weight: 700; padding: 4px 12px; border-radius: 8px; border: 1.5px solid; cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px; }
     .status-badge.active { background: rgba(74,222,128,0.15); color: #166534; border-color: rgba(74,222,128,0.4); }
-    .status-badge.completed { background: rgba(59,130,246,0.15); color: #1E40AF; border-color: rgba(59,130,246,0.4); }
+    .status-badge.completed { background: rgba(22,163,74,0.15); color: #166534; border-color: rgba(22,163,74,0.4); }
     .status-badge.paused { background: rgba(245,158,11,0.15); color: #92400E; border-color: rgba(245,158,11,0.4); }
     .manage-item .mid { display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid #F0F0F0; margin-bottom: 12px; font-size: 0.9rem; color: #6B6B6B; }
     .manage-item .mid .amt { font-weight: 700; color: #1A1A1A; }
@@ -162,9 +162,9 @@
   <div class="auth-overlay" id="adminLoginOverlay">
     <div class="auth-box">
       <h2>🔐 Admin Login</h2>
-      <form id="adminLoginForm">
+      <form id="adminLoginForm" onsubmit="return false;">
         <input type="password" id="adminPassword" placeholder="Password" required autocomplete="off">
-        <button type="submit" class="primary-btn">Login</button>
+        <button type="button" class="primary-btn" onclick="adminLogin()">Login</button>
         <p class="error" id="adminLoginError"></p>
       </form>
     </div>
@@ -403,6 +403,54 @@
     </div>
 
   </div>
+  <!-- LOGIN SCRIPT (runs immediately, before Firebase module loads) -->
+  <script>
+    const ADMIN_PASSWORD = "admin123";
+
+    window.adminLogin = function() {
+      const pwdEl = document.getElementById('adminPassword');
+      const errEl = document.getElementById('adminLoginError');
+      if (!pwdEl) return;
+      const pwd = pwdEl.value;
+      errEl.textContent = '';
+      if (pwd === ADMIN_PASSWORD) {
+        document.getElementById('adminLoginOverlay').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        sessionStorage.setItem('admin_logged', '1');
+        // Wait for module script to be ready, then start
+        waitAndStart();
+      } else {
+        errEl.textContent = '❌ Wrong password!';
+      }
+    };
+
+    // Wait up to 10 seconds for the module script to expose _startListening
+    window._loginReady = false;
+    function waitAndStart(attempts) {
+      attempts = attempts || 0;
+      if (window._startListening) {
+        window._createUsersModal && window._createUsersModal();
+        window._startListening();
+        window._loginReady = true;
+      } else if (attempts < 100) {
+        setTimeout(function() { waitAndStart(attempts + 1); }, 100);
+      } else {
+        console.log('⚠️ Module script did not load after 10 seconds');
+      }
+    }
+
+    window.logoutAdmin = function() {
+      sessionStorage.removeItem('admin_logged');
+      location.reload();
+    };
+
+    // Auto-login if previously logged in
+    if (sessionStorage.getItem('admin_logged') === '1') {
+      document.getElementById('adminLoginOverlay').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      waitAndStart();
+    }
+  </script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, push, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -419,7 +467,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const ADMIN_PASSWORD = "admin123";
     let allData = { users: {}, cycles: {}, bids: {}, bankDetails: {} };
     let currentCycleDetail = null;
     let paymentFilter = 'all';
@@ -463,28 +510,13 @@
       else if (pageId==='bank') fillBankForm();
     };
 
-    // ===== ADMIN LOGIN =====
-    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const pwd = document.getElementById('adminPassword').value;
-      if (pwd === ADMIN_PASSWORD) {
-        document.getElementById('adminLoginOverlay').style.display = 'none';
-        document.getElementById('adminContent').style.display = 'block';
-        sessionStorage.setItem('admin_logged', '1');
-        startListening();
-      } else {
-        document.getElementById('adminLoginError').textContent = '❌ Wrong password!';
-      }
-    });
-    window.logoutAdmin = function() {
-      sessionStorage.removeItem('admin_logged');
-      location.reload();
-    };
+    // Expose functions for the login script
+    window._startListening = startListening;
+    window._createUsersModal = createUsersModal;
 
-    // Auto-login if previously logged in
+    // If already logged in (auto-login), start listening now
     if (sessionStorage.getItem('admin_logged') === '1') {
-      document.getElementById('adminLoginOverlay').style.display = 'none';
-      document.getElementById('adminContent').style.display = 'block';
+      createUsersModal();
       startListening();
     }
 
@@ -654,9 +686,11 @@
       const c = allData.cycles[cid];
       if (!c) return;
       document.getElementById('cdTitle').innerText = c.name||'Cycle';
+      const isCompleted = (c.status||'Active')==='Completed';
       const totalPot = Number(c.monthlyAmount||0)*Number(c.totalMembers||0)*Number(c.durationMonths||1);
       const collected = calcCycleCollection(c);
-      const pct = totalPot>0 ? Math.min(100,Math.round((collected/totalPot)*100)) : 0;
+      // Completed cycles show 0% progress
+      const pct = isCompleted ? 0 : (totalPot>0 ? Math.min(100,Math.round((collected/totalPot)*100)) : 0);
       document.getElementById('cdTotalPot').innerText = fmtINR(totalPot);
       document.getElementById('cdProgress').innerText = pct+'%';
       document.getElementById('cdProgressFill').style.width = pct+'%';
@@ -968,6 +1002,14 @@
             <div class="form-field"><div class="label">Name</div><input type="text" id="editUserName" placeholder="Full Name"></div>
             <div class="form-field"><div class="label">Email</div><input type="text" id="editUserEmail" placeholder="Email"></div>
             <div class="form-field"><div class="label">Phone</div><input type="text" id="editUserPhone" placeholder="Phone Number"></div>
+            <div class="form-field">
+              <div class="label">Password</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <input type="password" id="editUserPassword" placeholder="Set Password" style="flex:1;">
+                <button type="button" onclick="toggleUserPasswordVisibility()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;" id="toggleUserPasswordBtn">👁️</button>
+              </div>
+              <div style="font-size:0.7rem;color:#9B9B9B;margin-top:4px;" id="editUserPasswordHint"></div>
+            </div>
             <button class="primary-btn" onclick="saveUserEdit()">💾 Save Changes</button>
             <button class="primary-btn danger" style="margin-top:8px;" onclick="deleteUser()">🗑️ Delete User</button>
           </div>
@@ -986,8 +1028,19 @@
       document.getElementById('editUserName').value = '';
       document.getElementById('editUserEmail').value = '';
       document.getElementById('editUserPhone').value = '';
+      document.getElementById('editUserPassword').value = '';
+      document.getElementById('editUserPassword').type = 'password';
+      document.getElementById('toggleUserPasswordBtn').innerText = '👁️';
+      document.getElementById('editUserPasswordHint').innerText = '';
       document.getElementById('editUserModalTitle').innerText = '➕ Add New User';
       document.getElementById('editUserModal').style.display = 'flex';
+    };
+
+    window.toggleUserPasswordVisibility = function() {
+      const inp = document.getElementById('editUserPassword');
+      const btn = document.getElementById('toggleUserPasswordBtn');
+      if (inp.type === 'password') { inp.type = 'text'; btn.innerText = '🙈'; }
+      else { inp.type = 'password'; btn.innerText = '👁️'; }
     };
 
     window.closeEditUserModal = function() {
@@ -1002,6 +1055,10 @@
       document.getElementById('editUserName').value = u.name||'';
       document.getElementById('editUserEmail').value = u.email||'';
       document.getElementById('editUserPhone').value = u.phone||'';
+      document.getElementById('editUserPassword').value = '';
+      document.getElementById('editUserPassword').type = 'password';
+      document.getElementById('toggleUserPasswordBtn').innerText = '👁️';
+      document.getElementById('editUserPasswordHint').innerText = u.password ? 'Khaali chhodein agar password change nahi karna' : 'Is user ka koi password set nahi hai';
       document.getElementById('editUserModalTitle').innerText = '✏️ Edit User';
       document.getElementById('editUserModal').style.display = 'flex';
     };
@@ -1012,16 +1069,20 @@
       const name = document.getElementById('editUserName').value.trim();
       const email = document.getElementById('editUserEmail').value.trim();
       const phone = document.getElementById('editUserPhone').value.trim();
+      const password = document.getElementById('editUserPassword').value;
       if (!name) return showToast('❌ Name required','error');
+      if (!uid && !password) return showToast('❌ Password required','error');
       try {
         if (uid) {
           // Edit existing
-          await update(ref(db, 'users/'+uid), { name, email, phone });
+          const updates = { name, email, phone };
+          if (password) updates.password = password; // keep old password if left blank
+          await update(ref(db, 'users/'+uid), updates);
           showToast('✅ User updated!');
         } else {
           // Add new user
           const newRef = push(ref(db, 'users'));
-          await set(newRef, { name, email, phone, role:'member' });
+          await set(newRef, { name, email, phone, password, role:'member' });
           showToast('✅ New user added!');
         }
         closeEditUserModal();
@@ -1075,10 +1136,17 @@
         html2 += `<div><strong style="font-size:0.9rem;">${cycleName}</strong><br><span style="font-size:0.7rem;color:#9B9B9B;">${month} • ${bids.length} bids</span></div>`;
         if (top) {
           const topPayout = Math.max(0, totalPot - Number(top.discountAmount||0));
+          const topRemaining = totalPot - topPayout;
           const zeroWarn = topPayout <= 0 ? ' ⚠️ ₹0 Payout!' : '';
           html2 += `<div style="text-align:right;"><span style="font-size:0.65rem;color:#9B9B9B;">Highest</span><br><strong style="color:${topPayout<=0?'#EF4444':'#F5A623'};">👑 ${top.userName||'?'} • ₹${top.discountAmount||0}${zeroWarn}</strong></div>`;
         }
         html2 += `</div>`;
+        // Total Pot Summary
+        html2 += `<div style="display:flex;gap:12px;margin-bottom:8px;font-size:0.7rem;color:#6B6B6B;">
+          <span>🪙 Pot: <strong style="color:#1A1A1A;">${fmtINR(totalPot)}</strong></span>
+          ${top ? `<span>💰 Winner Payout: <strong style="color:${(totalPot-Number(top.discountAmount||0))<=0?'#EF4444':'#16A34A'};">${fmtINR(Math.max(0,totalPot-Number(top.discountAmount||0)))}</strong></span>` : ''}
+          ${top ? `<span>📦 Remaining: <strong style="color:#F5A623;">${fmtINR(Math.max(0,Number(top.discountAmount||0)))}</strong> (Admin decide)</span>` : ''}
+        </div>`;
 
         sorted.forEach(b => {
           const s = b.status||'Active';
