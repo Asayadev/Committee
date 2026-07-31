@@ -162,9 +162,9 @@
   <div class="auth-overlay" id="adminLoginOverlay">
     <div class="auth-box">
       <h2>🔐 Admin Login</h2>
-      <form id="adminLoginForm" onsubmit="return false;">
+      <form id="adminLoginForm">
         <input type="password" id="adminPassword" placeholder="Password" required autocomplete="off">
-        <button type="button" class="primary-btn" onclick="adminLogin()">Login</button>
+        <button type="submit" class="primary-btn">Login</button>
         <p class="error" id="adminLoginError"></p>
       </form>
     </div>
@@ -403,39 +403,6 @@
     </div>
 
   </div>
-  <!-- LOGIN SCRIPT (runs immediately, before Firebase module loads) -->
-  <script>
-    const ADMIN_PASSWORD = "admin123";
-
-    window.adminLogin = function() {
-      const pwdEl = document.getElementById('adminPassword');
-      const errEl = document.getElementById('adminLoginError');
-      if (!pwdEl) return;
-      const pwd = pwdEl.value;
-      errEl.textContent = '';
-      if (pwd === ADMIN_PASSWORD) {
-        document.getElementById('adminLoginOverlay').style.display = 'none';
-        document.getElementById('adminContent').style.display = 'block';
-        sessionStorage.setItem('admin_logged', '1');
-        // startListening() will be called from module script once ready
-        if (window._startListening) window._startListening();
-        if (window._createUsersModal) window._createUsersModal();
-      } else {
-        errEl.textContent = '❌ Wrong password!';
-      }
-    };
-
-    window.logoutAdmin = function() {
-      sessionStorage.removeItem('admin_logged');
-      location.reload();
-    };
-
-    // Auto-login if previously logged in
-    if (sessionStorage.getItem('admin_logged') === '1') {
-      document.getElementById('adminLoginOverlay').style.display = 'none';
-      document.getElementById('adminContent').style.display = 'block';
-    }
-  </script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, push, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -496,13 +463,28 @@
       else if (pageId==='bank') fillBankForm();
     };
 
-    // Expose functions for the login script
-    window._startListening = startListening;
-    window._createUsersModal = createUsersModal;
+    // ===== ADMIN LOGIN =====
+    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('adminPassword').value;
+      if (pwd === ADMIN_PASSWORD) {
+        document.getElementById('adminLoginOverlay').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        sessionStorage.setItem('admin_logged', '1');
+        startListening();
+      } else {
+        document.getElementById('adminLoginError').textContent = '❌ Wrong password!';
+      }
+    });
+    window.logoutAdmin = function() {
+      sessionStorage.removeItem('admin_logged');
+      location.reload();
+    };
 
-    // If already logged in (auto-login), start listening now
+    // Auto-login if previously logged in
     if (sessionStorage.getItem('admin_logged') === '1') {
-      createUsersModal();
+      document.getElementById('adminLoginOverlay').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
       startListening();
     }
 
@@ -1093,17 +1075,10 @@
         html2 += `<div><strong style="font-size:0.9rem;">${cycleName}</strong><br><span style="font-size:0.7rem;color:#9B9B9B;">${month} • ${bids.length} bids</span></div>`;
         if (top) {
           const topPayout = Math.max(0, totalPot - Number(top.discountAmount||0));
-          const topRemaining = totalPot - topPayout;
           const zeroWarn = topPayout <= 0 ? ' ⚠️ ₹0 Payout!' : '';
           html2 += `<div style="text-align:right;"><span style="font-size:0.65rem;color:#9B9B9B;">Highest</span><br><strong style="color:${topPayout<=0?'#EF4444':'#F5A623'};">👑 ${top.userName||'?'} • ₹${top.discountAmount||0}${zeroWarn}</strong></div>`;
         }
         html2 += `</div>`;
-        <!-- Total Pot Summary -->
-        html2 += `<div style="display:flex;gap:12px;margin-bottom:8px;font-size:0.7rem;color:#6B6B6B;">
-          <span>🪙 Pot: <strong style="color:#1A1A1A;">${fmtINR(totalPot)}</strong></span>
-          ${top ? `<span>💰 Winner Payout: <strong style="color:${(totalPot-Number(top.discountAmount||0))<=0?'#EF4444':'#16A34A'};">${fmtINR(Math.max(0,totalPot-Number(top.discountAmount||0)))}</strong></span>` : ''}
-          ${top ? `<span>📦 Remaining: <strong style="color:#F5A623;">${fmtINR(Math.max(0,Number(top.discountAmount||0)))}</strong> (Admin decide)</span>` : ''}
-        </div>`;
 
         sorted.forEach(b => {
           const s = b.status||'Active';
