@@ -1075,10 +1075,17 @@
         html2 += `<div><strong style="font-size:0.9rem;">${cycleName}</strong><br><span style="font-size:0.7rem;color:#9B9B9B;">${month} • ${bids.length} bids</span></div>`;
         if (top) {
           const topPayout = Math.max(0, totalPot - Number(top.discountAmount||0));
+          const topRemaining = totalPot - topPayout;
           const zeroWarn = topPayout <= 0 ? ' ⚠️ ₹0 Payout!' : '';
           html2 += `<div style="text-align:right;"><span style="font-size:0.65rem;color:#9B9B9B;">Highest</span><br><strong style="color:${topPayout<=0?'#EF4444':'#F5A623'};">👑 ${top.userName||'?'} • ₹${top.discountAmount||0}${zeroWarn}</strong></div>`;
         }
         html2 += `</div>`;
+        <!-- Total Pot Summary -->
+        html2 += `<div style="display:flex;gap:12px;margin-bottom:8px;font-size:0.7rem;color:#6B6B6B;">
+          <span>🪙 Pot: <strong style="color:#1A1A1A;">${fmtINR(totalPot)}</strong></span>
+          ${top ? `<span>💰 Winner Payout: <strong style="color:${(totalPot-Number(top.discountAmount||0))<=0?'#EF4444':'#16A34A'};">${fmtINR(Math.max(0,totalPot-Number(top.discountAmount||0)))}</strong></span>` : ''}
+          ${top ? `<span>📦 Remaining: <strong style="color:#F5A623;">${fmtINR(Math.max(0,Number(top.discountAmount||0)))}</strong> (Admin decide)</span>` : ''}
+        </div>`;
 
         sorted.forEach(b => {
           const s = b.status||'Active';
