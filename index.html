@@ -31,9 +31,10 @@
 
     /* ===== STATS GRID ===== */
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-    .stat-card { background: white; border-radius: 16px; border: 1px solid #F0F0F0; padding: 14px 10px; text-align: center; }
+    .stat-card { background: white; cursor: pointer; transition: all 0.2s ease; border-radius: 16px; border: 1px solid #F0F0F0; padding: 14px 10px; text-align: center; }
     .stat-card .icon { font-size: 1.4rem; margin-bottom: 4px; }
     .stat-card .number { font-size: 1.3rem; font-weight: 800; color: #1A1A1A; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .stat-card .label { font-size: 0.6rem; color: #6B6B6B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
     .stat-card .number.green { color: #16A34A; }
     .stat-card .number.blue { color: #3B82F6; }
@@ -187,32 +188,32 @@
 
       <!-- STATS -->
       <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card" onclick="navigate('payments')" style="cursor:pointer;">
           <div class="icon">💰</div>
           <div class="number green" id="admTotalCollected">₹0</div>
           <div class="label">Total Collected</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="showUsersModal()" style="cursor:pointer;">
           <div class="icon">👥</div>
           <div class="number" id="admTotalUsers">0</div>
           <div class="label">Total Users</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="navigate('manage')" style="cursor:pointer;">
           <div class="icon">🔄</div>
           <div class="number blue" id="admActiveCycles">0</div>
           <div class="label">Active Cycles</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="navigateToPaymentsFilter('Approved')" style="cursor:pointer;">
           <div class="icon">✅</div>
           <div class="number green" id="admApprovedPayments">0</div>
           <div class="label">Approved</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="navigateToPaymentsFilter('Pending')" style="cursor:pointer;">
           <div class="icon">⏳</div>
           <div class="number amber" id="admPendingPayments">0</div>
           <div class="label">Pending</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="navigate('payments')" style="cursor:pointer;">
           <div class="icon">📆</div>
           <div class="number coral" id="admThisMonth">₹0</div>
           <div class="label">This Month</div>
@@ -237,6 +238,11 @@
         <span style="flex:1;font-weight:600;">All Payments</span>
         <span style="color:#9B9B9B;">›</span>
       </button>
+      <button class="card clickable" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;" onclick="navigate('bids')">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(184,169,232,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🏷️</div>
+        <span style="flex:1;font-weight:600;">Manage Bids (Auction)</span>
+        <span style="color:#9B9B9B;">›</span>
+      </button>
     </div>
 
     <!-- ===== MANAGE CYCLES PAGE ===== -->
@@ -249,6 +255,11 @@
       </div>
       <div id="manageCyclesList"></div>
       <button class="fab" onclick="navigate('new-cycle')">+</button>
+      <button class="card clickable" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;" onclick="navigate('bids')">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(184,169,232,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🏷️</div>
+        <span style="flex:1;font-weight:600;">Manage Bids (Auction)</span>
+        <span style="color:#9B9B9B;">›</span>
+      </button>
     </div>
 
     <!-- ===== NEW CYCLE PAGE ===== -->
@@ -345,6 +356,21 @@
       <div class="card" style="padding:0;" id="allPaymentsList"></div>
     </div>
 
+
+    <!-- ===== BIDS MANAGEMENT PAGE ===== -->
+    <div id="page-bids" class="page">
+      <div class="app-header" style="margin:-16px -16px 16px;">
+        <div class="left">
+          <button onclick="navigate('dashboard')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
+          <h1>Manage Bids</h1>
+        </div>
+      </div>
+      <div class="card" id="bidsList" style="padding:0;">
+        <div class="empty"><div class="emoji">🏷️</div><div class="text">Loading bids...</div></div>
+      </div>
+    </div>
+
+
     <!-- ===== BANK DETAILS PAGE ===== -->
     <div id="page-bank" class="page">
       <div class="app-header" style="margin:-16px -16px 16px;">
@@ -433,6 +459,7 @@
       else if (pageId==='manage') renderManage();
       else if (pageId==='new-cycle') resetNewCycleForm();
       else if (pageId==='payments') renderAllPayments();
+      else if (pageId==='bids') renderBids();
       else if (pageId==='bank') fillBankForm();
     };
 
@@ -477,6 +504,7 @@
           else if (id==='manage') renderManage();
           else if (id==='payments') renderAllPayments();
           else if (id==='cycle-detail' && currentCycleDetail) renderCycleDetail(currentCycleDetail);
+          else if (id==='bids') renderBids();
           else if (id==='bank') fillBankForm();
         }
       });
@@ -769,6 +797,131 @@
         </div>`;
       });
     }
+
+    // ===== USERS MODAL =====
+    window.showUsersModal = function() {
+      const modal = document.getElementById('usersModal');
+      const list = document.getElementById('usersModalList');
+      const users = allData.users || {};
+      const uids = Object.keys(users);
+      if (uids.length === 0) {
+        list.innerHTML = '<div class="empty"><div class="emoji">👥</div><div class="text">No users yet</div></div>';
+      } else {
+        list.innerHTML = uids.map(uid => {
+          const u = users[uid];
+          // Count in which cycles this user is a member
+          let cycleNames = [];
+          Object.entries(allData.cycles||{}).forEach(([cid, c]) => {
+            const members = c.members||{};
+            if (members[uid]) cycleNames.push(c.name||cid);
+          });
+          const memberPills = cycleNames.length > 0
+            ? cycleNames.map(cn => `<span style="background:rgba(91,84,214,0.1);color:#5B54D6;padding:2px 8px;border-radius:100px;font-size:0.65rem;margin-right:4px;">${cn}</span>`).join('')
+            : '<span style="color:#9B9B9B;font-size:0.7rem;">No cycle</span>';
+          return `
+            <div class="member-row">
+              <div class="member-pos">${(u.name||'?')[0]}</div>
+              <div class="member-info">
+                <div class="member-name">${u.name||'Unknown'}</div>
+                <div class="member-phone">📧 ${u.email||'-'} • 📱 ${u.phone||'-'}</div>
+                <div style="margin-top:4px;">${memberPills}</div>
+              </div>
+              <span style="font-size:0.6rem;color:#9B9B9B;">${u.role||'member'}</span>
+            </div>
+          `;
+        }).join('');
+      }
+      modal.style.display = 'flex';
+    };
+    window.closeUsersModal = function() {
+      document.getElementById('usersModal').style.display = 'none';
+    };
+
+    // ===== BIDS MANAGEMENT =====
+    function renderBids() {
+      const list = document.getElementById('bidsList');
+      const bids = allData.bids || {};
+      const bidArr = Object.entries(bids).map(([id,b]) => ({id,...b})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+
+      if (bidArr.length === 0) {
+        list.innerHTML = '<div class="empty"><div class="emoji">🏷️</div><div class="text">Koi bids nahi hain</div></div>';
+        return;
+      }
+
+      // Group by cycle+month
+      let html2 = '';
+      const grouped = {};
+      bidArr.forEach(b => {
+        const key = (b.cycleId||'unknown') + '|' + (b.month||'?');
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(b);
+      });
+
+      Object.entries(grouped).forEach(([key, bids]) => {
+        const [cid, month] = key.split('|');
+        const cycle = allData.cycles[cid];
+        const cycleName = cycle ? cycle.name : cid;
+        const totalPot = cycle ? Number(cycle.monthlyAmount||0)*Number(cycle.totalMembers||0) : 0;
+        const sorted = bids.sort((a,b)=>(b.discountAmount||0)-(a.discountAmount||0));
+        const top = sorted[0];
+
+        html2 += `<div style="padding:14px 16px;border-bottom:1px solid #F0F0F0;background:${sorted.length>0?'rgba(245,158,11,0.04)':'transparent'};">`;
+        html2 += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">`;
+        html2 += `<div><strong style="font-size:0.9rem;">${cycleName}</strong><br><span style="font-size:0.7rem;color:#9B9B9B;">${month} • ${bids.length} bids</span></div>`;
+        if (top) {
+          html2 += `<div style="text-align:right;"><span style="font-size:0.65rem;color:#9B9B9B;">Highest</span><br><strong style="color:#F5A623;">👑 ${top.userName||'?'} • ₹${top.discountAmount||0}</strong></div>`;
+        }
+        html2 += `</div>`;
+
+        sorted.forEach(b => {
+          const s = b.status||'Active';
+          const sc = s==='Approved'?'received':s==='Rejected'?'pending':'pending';
+          html2 += `<div class="member-row" style="font-size:0.8rem;">
+            <div class="member-pos" style="background:rgba(245,158,11,0.15);color:#92400E;">🏷️</div>
+            <div class="member-info">
+              <div class="member-name">${b.userName||'Unknown'}</div>
+              <div class="member-phone">📱 ${b.userPhone||'-'} | Discount: <strong>₹${b.discountAmount||0}</strong></div>
+            </div>
+            <div style="text-align:right;">
+              <span class="turn-badge ${sc}" style="margin-bottom:3px;display:inline-block;">${s}</span>
+              <div style="display:flex;gap:3px;justify-content:flex-end;">
+                <button class="btn-sm btn-approve" onclick="approveBid('${b.id}')">✅</button>
+                <button class="btn-sm btn-reject" onclick="rejectBid('${b.id}')">❌</button>
+              </div>
+            </div>
+          </div>`;
+        });
+        html2 += `</div>`;
+      });
+
+      list.innerHTML = html2 || '<div class="empty"><div class="emoji">🏷️</div><div class="text">No bids</div></div>';
+    }
+
+    window.approveBid = async function(bidId) {
+      try { await update(ref(db, 'bids/'+bidId), {status:'Approved'}); showToast('✅ Bid approved!'); }
+      catch(e) { showToast('❌ '+e.message,'error'); }
+    };
+    window.rejectBid = async function(bidId) {
+      try { await update(ref(db, 'bids/'+bidId), {status:'Rejected'}); showToast('❌ Bid rejected'); }
+      catch(e) { showToast('❌ '+e.message,'error'); }
+    };
+
+    // Navigate to payments with filter
+    window.navigateToPaymentsFilter = function(filter) {
+      paymentFilter = filter;
+      navigate('payments');
+      // Update active tab buttons
+      setTimeout(() => {
+        document.querySelectorAll('#page-payments .tabs button').forEach(b => {
+          b.classList.remove('active');
+          if ((filter === 'all' && b.innerText.includes('All')) ||
+              (filter === 'Approved' && b.innerText.includes('Approved')) ||
+              (filter === 'Pending' && b.innerText.includes('Pending'))) {
+            b.classList.add('active');
+          }
+        });
+      }, 100);
+    };
 
     // ===== BANK =====
     function fillBankForm() {
