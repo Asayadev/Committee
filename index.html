@@ -801,40 +801,245 @@
     // ===== USERS MODAL =====
     window.showUsersModal = function() {
       const modal = document.getElementById('usersModal');
+      if (!modal) {
+        createUsersModal();
+        return setTimeout(() => showUsersModal(), 100);
+      }
       const list = document.getElementById('usersModalList');
       const users = allData.users || {};
       const uids = Object.keys(users);
+      
+      // Calculate stats for each user
+      const userStats = uids.map(uid => {
+        const u = users[uid];
+        let totalDeposit = 0, totalBids = 0;
+        // Total deposit from approved payments across all cycles
+        Object.values(allData.cycles||{}).forEach(c => {
+          Object.values(c.payments||{}).forEach(p => {
+            if (p.status === 'Approved' && p.userId === uid) totalDeposit += Number(p.amount||0);
+          });
+        });
+        // Total bids count for this user
+        Object.values(allData.bids||{}).forEach(b => {
+          if (b.userId === uid) totalBids++;
+        });
+        // Cycles this user is a member of
+        let cycleNames = [];
+        Object.entries(allData.cycles||{}).forEach(([cid, c]) => {
+          const members = c.members||{};
+          if (members[uid]) cycleNames.push(c.name||cid);
+        });
+        return { uid, ...u, totalDeposit, totalBids, cycleNames };
+      });
+
+      // Apply search filter
+      const searchQuery = (document.getElementById('usersSearchInput')?.value || '').toLowerCase().trim();
+      const filtered = searchQuery
+        ? userStats.filter(us =>
+            (us.name||'').toLowerCase().includes(searchQuery) ||
+            (us.phone||'').includes(searchQuery)
+          )
+        : userStats;
+
       if (uids.length === 0) {
         list.innerHTML = '<div class="empty"><div class="emoji">👥</div><div class="text">No users yet</div></div>';
+      } else if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty"><div class="emoji">🔍</div><div class="text">Koi user nahi mila "'+searchQuery+'" se</div></div>';
       } else {
-        list.innerHTML = uids.map(uid => {
-          const u = users[uid];
-          // Count in which cycles this user is a member
-          let cycleNames = [];
-          Object.entries(allData.cycles||{}).forEach(([cid, c]) => {
-            const members = c.members||{};
-            if (members[uid]) cycleNames.push(c.name||cid);
-          });
-          const memberPills = cycleNames.length > 0
-            ? cycleNames.map(cn => `<span style="background:rgba(91,84,214,0.1);color:#5B54D6;padding:2px 8px;border-radius:100px;font-size:0.65rem;margin-right:4px;">${cn}</span>`).join('')
+        list.innerHTML = filtered.map(us => {
+          const memberPills = us.cycleNames.length > 0
+            ? us.cycleNames.map(cn => `<span style="background:rgba(91,84,214,0.1);color:#5B54D6;padding:2px 8px;border-radius:100px;font-size:0.65rem;margin-right:4px;">${cn}</span>`).join('')
             : '<span style="color:#9B9B9B;font-size:0.7rem;">No cycle</span>';
           return `
-            <div class="member-row">
-              <div class="member-pos">${(u.name||'?')[0]}</div>
+            <div class="member-row" style="align-items:flex-start;">
+              <div class="member-pos">${(us.name||'?')[0]}</div>
               <div class="member-info">
-                <div class="member-name">${u.name||'Unknown'}</div>
-                <div class="member-phone">📧 ${u.email||'-'} • 📱 ${u.phone||'-'}</div>
+                <div class="member-name">${us.name||'Unknown'}</div>
+                <div class="member-phone">📧 ${us.email||'-'} • 📱 ${us.phone||'-'}</div>
                 <div style="margin-top:4px;">${memberPills}</div>
+                <div style="margin-top:6px;display:flex;gap:12px;font-size:0.7rem;color:#6B6B6B;">
+                  <span>💰 Deposit: <strong style="color:#16A34A;">${fmtINR(us.totalDeposit)}</strong></span>
+                  <span>🏷️ Bids: <strong style="color:#F5A623;">${us.totalBids}</strong></span>
+                </div>
               </div>
-              <span style="font-size:0.6rem;color:#9B9B9B;">${u.role||'member'}</span>
+              <div style="text-align:right;display:flex;flex-direction:column;gap:4px;">
+                <span style="font-size:0.6rem;color:#9B9B9B;">${us.role||'member'}</span>
+                <button class="btn-sm btn-outline-sm" onclick="editUserModal('${us.uid}')" style="font-size:0.65rem;">✏️ Edit</button>
+              </div>
             </div>
           `;
         }).join('');
       }
       modal.style.display = 'flex';
     };
+
+    // ===== FILTER USERS (SEARCH) =====
+    window.filterUsers = function() {
+      // Re-call showUsersModal with current search value
+      const modal = document.getElementById('usersModal');
+      if (!modal || modal.style.display !== 'flex') return;
+      const list = document.getElementById('usersModalList');
+      const users = allData.users || {};
+      const uids = Object.keys(users);
+      const searchQuery = (document.getElementById('usersSearchInput')?.value || '').toLowerCase().trim();
+
+      const userStats = uids.map(uid => {
+        const u = users[uid];
+        let totalDeposit = 0, totalBids = 0;
+        Object.values(allData.cycles||{}).forEach(c => {
+          Object.values(c.payments||{}).forEach(p => {
+            if (p.status === 'Approved' && p.userId === uid) totalDeposit += Number(p.amount||0);
+          });
+        });
+        Object.values(allData.bids||{}).forEach(b => {
+          if (b.userId === uid) totalBids++;
+        });
+        let cycleNames = [];
+        Object.entries(allData.cycles||{}).forEach(([cid, c]) => {
+          const members = c.members||{};
+          if (members[uid]) cycleNames.push(c.name||cid);
+        });
+        return { uid, ...u, totalDeposit, totalBids, cycleNames };
+      });
+
+      const filtered = searchQuery
+        ? userStats.filter(us =>
+            (us.name||'').toLowerCase().includes(searchQuery) ||
+            (us.phone||'').includes(searchQuery)
+          )
+        : userStats;
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty"><div class="emoji">🔍</div><div class="text">Koi user nahi mila</div></div>';
+      } else {
+        list.innerHTML = filtered.map(us => {
+          const memberPills = us.cycleNames.length > 0
+            ? us.cycleNames.map(cn => `<span style="background:rgba(91,84,214,0.1);color:#5B54D6;padding:2px 8px;border-radius:100px;font-size:0.65rem;margin-right:4px;">${cn}</span>`).join('')
+            : '<span style="color:#9B9B9B;font-size:0.7rem;">No cycle</span>';
+          return `
+            <div class="member-row" style="align-items:flex-start;">
+              <div class="member-pos">${(us.name||'?')[0]}</div>
+              <div class="member-info">
+                <div class="member-name">${us.name||'Unknown'}</div>
+                <div class="member-phone">📧 ${us.email||'-'} • 📱 ${us.phone||'-'}</div>
+                <div style="margin-top:4px;">${memberPills}</div>
+                <div style="margin-top:6px;display:flex;gap:12px;font-size:0.7rem;color:#6B6B6B;">
+                  <span>💰 Deposit: <strong style="color:#16A34A;">${fmtINR(us.totalDeposit)}</strong></span>
+                  <span>🏷️ Bids: <strong style="color:#F5A623;">${us.totalBids}</strong></span>
+                </div>
+              </div>
+              <div style="text-align:right;display:flex;flex-direction:column;gap:4px;">
+                <span style="font-size:0.6rem;color:#9B9B9B;">${us.role||'member'}</span>
+                <button class="btn-sm btn-outline-sm" onclick="editUserModal('${us.uid}')" style="font-size:0.65rem;">✏️ Edit</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    };
+
+    // ===== CREATE USERS MODAL HTML =====
+    function createUsersModal() {
+      const html = `
+        <div class="modal-overlay" id="usersModal" style="display:none;" onclick="if(event.target===this)closeUsersModal()">
+          <div class="modal-box" style="max-width:480px;max-height:85vh;overflow-y:auto;position:relative;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <h2 style="margin:0;">👥 All Users</h2>
+              <button onclick="closeUsersModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;">✕</button>
+            </div>
+            <div style="margin-bottom:12px;">
+              <input type="text" id="usersSearchInput" placeholder="🔍 Naam ya phone se search karein..." oninput="filterUsers()"
+                style="width:100%;padding:10px 14px;border:1px solid #E0E0E0;border-radius:12px;font-size:0.9rem;background:#F8FAFC;outline:none;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='#5B54D6'" onblur="this.style.borderColor='#E0E0E0'">
+            </div>
+            <div id="usersModalList"></div>
+            <button class="primary-btn" style="margin-top:16px;background:#16A34A;box-shadow:0 2px 8px rgba(22,163,74,0.3);" onclick="addNewUserModal()">
+              ➕ Add New User
+            </button>
+          </div>
+        </div>
+        <div class="modal-overlay" id="editUserModal" style="display:none;" onclick="if(event.target===this)closeEditUserModal()">
+          <div class="modal-box" style="max-width:420px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <h2 style="margin:0;" id="editUserModalTitle">✏️ Edit User</h2>
+              <button onclick="closeEditUserModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;">✕</button>
+            </div>
+            <input type="hidden" id="editUserUid">
+            <div class="form-field"><div class="label">Name</div><input type="text" id="editUserName" placeholder="Full Name"></div>
+            <div class="form-field"><div class="label">Email</div><input type="text" id="editUserEmail" placeholder="Email"></div>
+            <div class="form-field"><div class="label">Phone</div><input type="text" id="editUserPhone" placeholder="Phone Number"></div>
+            <button class="primary-btn" onclick="saveUserEdit()">💾 Save Changes</button>
+            <button class="primary-btn danger" style="margin-top:8px;" onclick="deleteUser()">🗑️ Delete User</button>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', html);
+    };
+
     window.closeUsersModal = function() {
       document.getElementById('usersModal').style.display = 'none';
+    };
+
+    // ===== ADD NEW USER =====
+    window.addNewUserModal = function() {
+      document.getElementById('editUserUid').value = '';
+      document.getElementById('editUserName').value = '';
+      document.getElementById('editUserEmail').value = '';
+      document.getElementById('editUserPhone').value = '';
+      document.getElementById('editUserModalTitle').innerText = '➕ Add New User';
+      document.getElementById('editUserModal').style.display = 'flex';
+    };
+
+    window.closeEditUserModal = function() {
+      document.getElementById('editUserModal').style.display = 'none';
+    };
+
+    // ===== EDIT USER =====
+    window.editUserModal = function(uid) {
+      const u = allData.users[uid];
+      if (!u) return showToast('❌ User not found','error');
+      document.getElementById('editUserUid').value = uid;
+      document.getElementById('editUserName').value = u.name||'';
+      document.getElementById('editUserEmail').value = u.email||'';
+      document.getElementById('editUserPhone').value = u.phone||'';
+      document.getElementById('editUserModalTitle').innerText = '✏️ Edit User';
+      document.getElementById('editUserModal').style.display = 'flex';
+    };
+
+    // ===== SAVE USER (ADD/EDIT) =====
+    window.saveUserEdit = async function() {
+      const uid = document.getElementById('editUserUid').value;
+      const name = document.getElementById('editUserName').value.trim();
+      const email = document.getElementById('editUserEmail').value.trim();
+      const phone = document.getElementById('editUserPhone').value.trim();
+      if (!name) return showToast('❌ Name required','error');
+      try {
+        if (uid) {
+          // Edit existing
+          await update(ref(db, 'users/'+uid), { name, email, phone });
+          showToast('✅ User updated!');
+        } else {
+          // Add new user
+          const newRef = push(ref(db, 'users'));
+          await set(newRef, { name, email, phone, role:'member' });
+          showToast('✅ New user added!');
+        }
+        closeEditUserModal();
+        setTimeout(() => showUsersModal(), 500);
+      } catch(e) { showToast('❌ '+e.message,'error'); }
+    };
+
+    // ===== DELETE USER =====
+    window.deleteUser = async function() {
+      const uid = document.getElementById('editUserUid').value;
+      if (!uid) return;
+      if (!confirm('Delete this user? This cannot be undone!')) return;
+      try {
+        await remove(ref(db, 'users/'+uid));
+        showToast('🗑️ User deleted');
+        closeEditUserModal();
+        setTimeout(() => showUsersModal(), 500);
+      } catch(e) { showToast('❌ '+e.message,'error'); }
     };
 
     // ===== BIDS MANAGEMENT =====
@@ -869,24 +1074,31 @@
         html2 += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">`;
         html2 += `<div><strong style="font-size:0.9rem;">${cycleName}</strong><br><span style="font-size:0.7rem;color:#9B9B9B;">${month} • ${bids.length} bids</span></div>`;
         if (top) {
-          html2 += `<div style="text-align:right;"><span style="font-size:0.65rem;color:#9B9B9B;">Highest</span><br><strong style="color:#F5A623;">👑 ${top.userName||'?'} • ₹${top.discountAmount||0}</strong></div>`;
+          const topPayout = Math.max(0, totalPot - Number(top.discountAmount||0));
+          const zeroWarn = topPayout <= 0 ? ' ⚠️ ₹0 Payout!' : '';
+          html2 += `<div style="text-align:right;"><span style="font-size:0.65rem;color:#9B9B9B;">Highest</span><br><strong style="color:${topPayout<=0?'#EF4444':'#F5A623'};">👑 ${top.userName||'?'} • ₹${top.discountAmount||0}${zeroWarn}</strong></div>`;
         }
         html2 += `</div>`;
 
         sorted.forEach(b => {
           const s = b.status||'Active';
           const sc = s==='Approved'?'received':s==='Rejected'?'pending':'pending';
-          html2 += `<div class="member-row" style="font-size:0.8rem;">
+          const bidPayout = Math.max(0, totalPot - Number(b.discountAmount||0));
+          const isZeroPayout = (bidPayout <= 0);
+          const warnStyle = isZeroPayout ? 'background:rgba(239,68,68,0.06);' : '';
+          const approveBtn = (!isZeroPayout) ? `<button class="btn-sm btn-approve" onclick="approveBid('${b.id}')">✅</button>` : '';
+          const rejectBtn = `<button class="btn-sm btn-reject" onclick="rejectBid('${b.id}')">${isZeroPayout ? '❌ Reject (₹0)' : '❌'}</button>`;
+          html2 += `<div class="member-row" style="font-size:0.8rem;${warnStyle}">
             <div class="member-pos" style="background:rgba(245,158,11,0.15);color:#92400E;">🏷️</div>
             <div class="member-info">
-              <div class="member-name">${b.userName||'Unknown'}</div>
-              <div class="member-phone">📱 ${b.userPhone||'-'} | Discount: <strong>₹${b.discountAmount||0}</strong></div>
+              <div class="member-name">${b.userName||'Unknown'} ${isZeroPayout ? '<span style="color:#EF4444;font-size:0.65rem;">⚠️ ₹0 Payout!</span>' : ''}</div>
+              <div class="member-phone">📱 ${b.userPhone||'-'} | Discount: <strong>₹${b.discountAmount||0}</strong> | Payout: <strong style="color:${isZeroPayout?'#EF4444':'#16A34A'};">₹${bidPayout.toLocaleString('en-IN')}</strong></div>
             </div>
             <div style="text-align:right;">
               <span class="turn-badge ${sc}" style="margin-bottom:3px;display:inline-block;">${s}</span>
               <div style="display:flex;gap:3px;justify-content:flex-end;">
-                <button class="btn-sm btn-approve" onclick="approveBid('${b.id}')">✅</button>
-                <button class="btn-sm btn-reject" onclick="rejectBid('${b.id}')">❌</button>
+                ${approveBtn}
+                ${rejectBtn}
               </div>
             </div>
           </div>`;
@@ -898,6 +1110,17 @@
     }
 
     window.approveBid = async function(bidId) {
+      const bid = allData.bids[bidId];
+      if (!bid) return showToast('❌ Bid not found','error');
+      // Check if payout would be 0 (discount >= monthly pot)
+      const cycle = allData.cycles[bid.cycleId];
+      if (cycle) {
+        const totalPot = Number(cycle.monthlyAmount||0) * Number(cycle.totalMembers||0);
+        const discount = Number(bid.discountAmount||0);
+        if (discount >= totalPot) {
+          return showToast('❌ Cannot approve: Payout would be ₹0! Reject this bid instead.','error');
+        }
+      }
       try { await update(ref(db, 'bids/'+bidId), {status:'Approved'}); showToast('✅ Bid approved!'); }
       catch(e) { showToast('❌ '+e.message,'error'); }
     };
@@ -944,6 +1167,8 @@
       } catch(err) { showToast('❌ '+err.message,'error'); }
     });
   </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b"}' crossorigin="anonymous"></script>
 </body>
 </html>
