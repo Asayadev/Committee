@@ -403,6 +403,39 @@
     </div>
 
   </div>
+  <!-- LOGIN SCRIPT (runs immediately, before Firebase module loads) -->
+  <script>
+    const ADMIN_PASSWORD = "admin123";
+
+    window.adminLogin = function() {
+      const pwdEl = document.getElementById('adminPassword');
+      const errEl = document.getElementById('adminLoginError');
+      if (!pwdEl) return;
+      const pwd = pwdEl.value;
+      errEl.textContent = '';
+      if (pwd === ADMIN_PASSWORD) {
+        document.getElementById('adminLoginOverlay').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        sessionStorage.setItem('admin_logged', '1');
+        // startListening() will be called from module script once ready
+        if (window._startListening) window._startListening();
+        if (window._createUsersModal) window._createUsersModal();
+      } else {
+        errEl.textContent = '❌ Wrong password!';
+      }
+    };
+
+    window.logoutAdmin = function() {
+      sessionStorage.removeItem('admin_logged');
+      location.reload();
+    };
+
+    // Auto-login if previously logged in
+    if (sessionStorage.getItem('admin_logged') === '1') {
+      document.getElementById('adminLoginOverlay').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+    }
+  </script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, push, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -463,32 +496,13 @@
       else if (pageId==='bank') fillBankForm();
     };
 
-    // ===== ADMIN LOGIN =====
-    window.adminLogin = function() {
-      const pwdEl = document.getElementById('adminPassword');
-      const errEl = document.getElementById('adminLoginError');
-      if (!pwdEl) return;
-      const pwd = pwdEl.value;
-      errEl.textContent = '';
-      if (pwd === ADMIN_PASSWORD) {
-        document.getElementById('adminLoginOverlay').style.display = 'none';
-        document.getElementById('adminContent').style.display = 'block';
-        sessionStorage.setItem('admin_logged', '1');
-        createUsersModal();
-        startListening();
-      } else {
-        errEl.textContent = '❌ Wrong password!';
-      }
-    };
-    window.logoutAdmin = function() {
-      sessionStorage.removeItem('admin_logged');
-      location.reload();
-    };
+    // Expose functions for the login script
+    window._startListening = startListening;
+    window._createUsersModal = createUsersModal;
 
-    // Auto-login if previously logged in
+    // If already logged in (auto-login), start listening now
     if (sessionStorage.getItem('admin_logged') === '1') {
-      document.getElementById('adminLoginOverlay').style.display = 'none';
-      document.getElementById('adminContent').style.display = 'block';
+      createUsersModal();
       startListening();
     }
 
