@@ -162,9 +162,9 @@
   <div class="auth-overlay" id="adminLoginOverlay">
     <div class="auth-box">
       <h2>🔐 Admin Login</h2>
-      <form id="adminLoginForm">
+      <form id="adminLoginForm" onsubmit="return false;">
         <input type="password" id="adminPassword" placeholder="Password" required autocomplete="off">
-        <button type="submit" class="primary-btn" onclick="adminLogin(event)">Login</button>
+        <button type="button" class="primary-btn" onclick="adminLogin()">Login</button>
         <p class="error" id="adminLoginError"></p>
       </form>
     </div>
@@ -464,21 +464,22 @@
     };
 
     // ===== ADMIN LOGIN =====
-    window.adminLogin = function(e) {
-      if (e) e.preventDefault();
-      const pwd = document.getElementById('adminPassword').value;
-      document.getElementById('adminLoginError').textContent = '';
+    window.adminLogin = function() {
+      const pwdEl = document.getElementById('adminPassword');
+      const errEl = document.getElementById('adminLoginError');
+      if (!pwdEl) return;
+      const pwd = pwdEl.value;
+      errEl.textContent = '';
       if (pwd === ADMIN_PASSWORD) {
         document.getElementById('adminLoginOverlay').style.display = 'none';
         document.getElementById('adminContent').style.display = 'block';
         sessionStorage.setItem('admin_logged', '1');
-        createUsersModal(); // Pre-create users modal
+        createUsersModal();
         startListening();
       } else {
-        document.getElementById('adminLoginError').textContent = '❌ Wrong password!';
+        errEl.textContent = '❌ Wrong password!';
       }
     };
-    document.getElementById('adminLoginForm').addEventListener('submit', adminLogin);
     window.logoutAdmin = function() {
       sessionStorage.removeItem('admin_logged');
       location.reload();
