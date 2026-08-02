@@ -1,1242 +1,1476 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Admin Dashboard - BC Committee</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif; }
-    body { background: #F4F5F9; color: #1A1A1A; min-height: 100vh; padding-bottom: 20px; -webkit-tap-highlight-color: transparent; }
-    .admin-container { max-width: 560px; margin: 0 auto; background: #F4F5F9; min-height: 100vh; position: relative; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>📜 Admin Panel - Gao Committee</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
+    </script>
+    
+    <style>
+        /* ===== CSS VARIABLES ===== */
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --secondary: #16a34a;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+            --radius: 14px;
+            --sidebar-width: 250px;
+        }
 
-    /* ===== HEADER ===== */
-    .app-header { background: #0F172A; color: white; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
-    .app-header .left { display: flex; align-items: center; gap: 14px; }
-    .app-header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
-    .app-header .role { font-size: 0.7rem; opacity: 0.7; background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 100px; font-weight: 500; }
-    .app-header .actions { display: flex; align-items: center; gap: 14px; }
-    .app-header .actions button { background: none; border: none; color: white; cursor: pointer; padding: 4px; display: flex; align-items: center; font-size: 1.1rem; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
 
-    /* ===== PAGE CONTENT ===== */
-    .page { padding: 16px; display: none; animation: fadeIn 300ms ease-out; }
-    .page.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: #0f172a;
+            color: #fff;
+            padding: 20px 0;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-brand {
+            text-align: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #1e293b;
+            margin-bottom: 20px;
+        }
+        .sidebar-brand h2 {
+            font-size: 20px;
+            letter-spacing: 0.5px;
+        }
+        .sidebar-brand h2 span {
+            color: var(--warning);
+        }
+        .sidebar-brand small {
+            display: block;
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.2s;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            color: #fff;
+            background: #1e293b;
+            border-left-color: var(--warning);
+        }
+        .sidebar-nav a .badge {
+            background: var(--warning);
+            color: #0f172a;
+            padding: 1px 9px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: auto;
+        }
+        .sidebar-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #475569;
+            font-size: 11px;
+            padding: 0 20px;
+        }
 
-    /* ===== CARDS ===== */
-    .card { background: white; border-radius: 20px; border: 1px solid #F0F0F0; padding: 20px; margin-bottom: 16px; transition: all 0.2s ease; }
-    .card.clickable { cursor: pointer; }
-    .card.clickable:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        /* ===== HAMBURGER ===== */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+        }
 
-    /* ===== STATS GRID ===== */
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-    .stat-card { background: white; cursor: pointer; transition: all 0.2s ease; border-radius: 16px; border: 1px solid #F0F0F0; padding: 14px 10px; text-align: center; }
-    .stat-card .icon { font-size: 1.4rem; margin-bottom: 4px; }
-    .stat-card .number { font-size: 1.3rem; font-weight: 800; color: #1A1A1A; }
-    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .stat-card .label { font-size: 0.6rem; color: #6B6B6B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
-    .stat-card .number.green { color: #16A34A; }
-    .stat-card .number.blue { color: #3B82F6; }
-    .stat-card .number.amber { color: #F5A623; }
-    .stat-card .number.coral { color: #FF6B6B; }
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px 25px;
+            min-height: 100vh;
+        }
 
-    /* ===== SECTION HEADING ===== */
-    .section-h { font-size: 0.95rem; font-weight: 700; color: #1A1A1A; margin: 16px 0 10px; display: flex; align-items: center; gap: 8px; }
+        /* ===== TOP HEADER ===== */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .top-header h1 {
+            font-size: 20px;
+            color: var(--primary);
+        }
+        .top-header .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .top-header .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
 
-    /* ===== CYCLE CARD ===== */
-    .manage-item { background: white; border-radius: 20px; border: 1px solid #F0F0F0; padding: 18px; margin-bottom: 12px; animation: slideUp 300ms ease-out; }
-    .manage-item .top { display: flex; align-items: start; justify-content: space-between; margin-bottom: 12px; }
-    .manage-item .amount { font-size: 1.6rem; font-weight: 800; color: #1A1A1A; }
-    .manage-item .name { font-size: 0.8rem; color: #9B9B9B; margin-top: 2px; }
-    .status-badge { font-size: 0.72rem; font-weight: 700; padding: 4px 12px; border-radius: 8px; border: 1.5px solid; cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px; }
-    .status-badge.active { background: rgba(74,222,128,0.15); color: #166534; border-color: rgba(74,222,128,0.4); }
-    .status-badge.completed { background: rgba(22,163,74,0.15); color: #166534; border-color: rgba(22,163,74,0.4); }
-    .status-badge.paused { background: rgba(245,158,11,0.15); color: #92400E; border-color: rgba(245,158,11,0.4); }
-    .manage-item .mid { display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid #F0F0F0; margin-bottom: 12px; font-size: 0.9rem; color: #6B6B6B; }
-    .manage-item .mid .amt { font-weight: 700; color: #1A1A1A; }
-    .manage-item .bot { display: flex; align-items: center; justify-content: space-between; }
-    .manage-item .members { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 600; color: #5B54D6; }
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-title .count {
+            font-size: 13px;
+            background: var(--border);
+            padding: 2px 12px;
+            border-radius: 20px;
+            color: var(--text-muted);
+        }
 
-    /* ===== FAB ===== */
-    .fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 18px; background: #B8A9E8; color: #1A1A1A; border: none; box-shadow: 0 4px 16px rgba(184,169,232,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 400; transition: all 0.2s; z-index: 40; }
-    .fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(184,169,232,0.7); }
-    @media (min-width: 560px) { .fab { right: calc(50% - 280px + 24px); } }
+        /* ===== STATS GRID ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            padding: 16px 18px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+        }
+        .stat-card h4 {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .stat-card p {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .stat-card.green {
+            border-left-color: var(--secondary);
+        }
+        .stat-card.yellow {
+            border-left-color: var(--warning);
+        }
+        .stat-card.red {
+            border-left-color: var(--danger);
+        }
 
-    /* ===== NEW CYCLE FORM ===== */
-    .form-field { margin-bottom: 18px; }
-    .form-field .label { font-size: 0.8rem; color: #6B6B6B; font-weight: 500; margin-bottom: 4px; }
-    .form-field input[type="text"], .form-field input[type="number"], .form-field input[type="date"] {
-      width: 100%; background: transparent; border: none; border-bottom: 1px solid #E0E0E0; padding: 8px 2px;
-      font-size: 1.3rem; font-weight: 700; color: #1A1A1A; outline: none; transition: border-color 0.2s;
-    }
-    .form-field input:focus { border-color: #5B54D6; }
-    .form-field input::placeholder { color: #9B9B9B; font-weight: 400; font-size: 1rem; }
-    .date-field { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #E0E0E0; padding: 12px 0; margin-bottom: 18px; }
-    .date-field .info { flex: 1; }
-    .date-field .lbl { font-size: 1.05rem; color: #1A1A1A; font-weight: 500; }
-    .date-field .val { font-size: 0.85rem; color: #6B6B6B; margin-top: 2px; }
-    .summary-card { background: rgba(91,84,214,0.05); border: 1px solid rgba(91,84,214,0.2); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
-    .summary-card .slbl { font-size: 0.65rem; color: #6B6B6B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .summary-card .sval { font-size: 1.5rem; font-weight: 800; color: #5B54D6; margin-top: 2px; }
-    .summary-card .shint { font-size: 0.75rem; color: #6B6B6B; margin-top: 4px; }
+        /* ===== FORMS ===== */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+        .form-row input,
+        .form-row select {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            width: 100%;
+            background: #fff;
+        }
+        .form-row button {
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: none;
+            background: var(--secondary);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+        .form-row button:hover {
+            opacity: 0.85;
+        }
+        .form-row button.danger {
+            background: var(--danger);
+        }
 
-    .primary-btn { width: 100%; padding: 14px; background: #5B54D6; color: white; border: none; border-radius: 100px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(91,84,214,0.3); display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .primary-btn:hover { background: #4A44C0; box-shadow: 0 4px 16px rgba(91,84,214,0.4); }
-    .primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .primary-btn.danger { background: #EF4444; box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
-    .primary-btn.danger:hover { background: #DC2626; }
-    .btn-sm { padding: 5px 12px; font-size: 0.7rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
-    .btn-approve { background: #16A34A; color: white; }
-    .btn-reject { background: #EF4444; color: white; }
-    .btn-outline-sm { background: transparent; border: 1px solid #E0E0E0; color: #6B6B6B; padding: 4px 10px; font-size: 0.7rem; border-radius: 8px; cursor: pointer; }
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 480px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
 
-    /* ===== TABS ===== */
-    .tabs { display: flex; gap: 6px; background: rgba(240,240,240,0.6); border-radius: 100px; padding: 4px; width: fit-content; margin: 0 auto 16px; }
-    .tabs button { background: transparent; border: none; padding: 8px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 600; color: #6B6B6B; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
-    .tabs button.active { background: white; color: #1A1A1A; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
+        /* ===== TABLE ===== */
+        .table-wrap {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        table th {
+            text-align: left;
+            padding: 10px 14px;
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+        table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        table tr:hover td {
+            background: #f8fafc;
+        }
 
-    /* ===== MEMBER ROW ===== */
-    .member-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #F0F0F0; transition: background 0.15s; }
-    .member-row:last-child { border-bottom: none; }
-    .member-row.current { background: rgba(91,84,214,0.05); }
-    .member-pos { width: 36px; height: 36px; border-radius: 50%; background: rgba(184,169,232,0.2); color: #5B21B6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
-    .member-info { flex: 1; min-width: 0; }
-    .member-name { font-size: 0.85rem; font-weight: 600; color: #1A1A1A; }
-    .member-phone { font-size: 0.7rem; color: #9B9B9B; }
-    .turn-badge { font-size: 0.62rem; font-weight: 700; padding: 3px 9px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.3px; border: 1px solid; }
-    .turn-badge.received { background: rgba(74,222,128,0.15); color: #166534; border-color: rgba(74,222,128,0.4); }
-    .turn-badge.current { background: rgba(59,130,246,0.15); color: #1E40AF; border-color: rgba(59,130,246,0.4); }
-    .turn-badge.pending { background: rgba(245,158,11,0.15); color: #92400E; border-color: rgba(245,158,11,0.4); }
+        /* ===== BADGES ===== */
+        .badge-status {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-status.paid {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .badge-status.pending {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .badge-status.won {
+            background: #fef3c7;
+            color: #92400e;
+        }
 
-    /* ===== PAYMENT ROW ===== */
-    .payment-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #F0F0F0; }
-    .payment-row:last-child { border-bottom: none; }
+        /* ===== BUTTONS ===== */
+        .btn-sm {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-sm.pay {
+            background: var(--secondary);
+            color: #fff;
+        }
+        .btn-sm.unpay {
+            background: var(--warning);
+            color: #fff;
+        }
+        .btn-sm.del {
+            background: var(--danger);
+            color: #fff;
+        }
+        .btn-sm:hover {
+            opacity: 0.8;
+        }
 
-    /* ===== MODAL / OVERLAY ===== */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .modal-box { background: white; border-radius: 20px; padding: 24px; max-width: 420px; width: 100%; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
-    .modal-box h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-primary:hover {
+            opacity: 0.85;
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
-    /* ===== BANK ===== */
-    .bank-box { background: #F8FAFC; border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 0.85rem; border: 1px solid #E9EDF2; }
-    .bank-box p { margin: 4px 0; }
+        .action-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
 
-    /* ===== TOAST ===== */
-    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1A1A1A; color: white; padding: 10px 20px; border-radius: 100px; font-weight: 600; z-index: 200; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.3); max-width: 90%; font-size: 0.85rem; }
-    .toast.success { background: #16A34A; }
-    .toast.error { background: #EF4444; }
+        /* ===== POOL BOX ===== */
+        .pool-box {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+            text-align: center;
+            padding: 25px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .pool-box h2 {
+            font-size: 32px;
+            margin: 8px 0;
+        }
+        .pool-box small {
+            opacity: 0.85;
+            font-size: 13px;
+        }
 
-    /* ===== EMPTY ===== */
-    .empty { padding: 40px 20px; text-align: center; }
-    .empty .emoji { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5; }
-    .empty .text { font-size: 0.85rem; color: #9B9B9B; }
+        /* ===== WHATSAPP / PDF BUTTONS ===== */
+        .whatsapp-btn {
+            background: #25D366;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .whatsapp-btn:hover {
+            background: #1da851;
+        }
+        .pdf-btn {
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .pdf-btn:hover {
+            background: #b91c1c;
+        }
 
-    /* ===== CYCLES LIST IN DASHBOARD ===== */
-    .cycle-dash-card { padding: 14px 16px; border-bottom: 1px solid #F0F0F0; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; }
-    .cycle-dash-card:last-child { border-bottom: none; }
-    .cycle-dash-card:hover { background: #FAFAF8; }
+        /* ===== HIDDEN ===== */
+        .hidden {
+            display: none !important;
+        }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-    th, td { padding: 8px 6px; border-bottom: 1px solid #F0F0F0; text-align: left; }
-    th { font-size: 0.62rem; text-transform: uppercase; color: #9B9B9B; font-weight: 600; }
-    .trun { font-size: 0.7rem; font-family: monospace; }
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #0f172a;
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            z-index: 2000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: 0.3s ease;
+            max-width: 400px;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast.success {
+            border-left: 4px solid var(--secondary);
+        }
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
 
-    /* ===== AUTH ===== */
-    .auth-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .auth-box { background: white; border-radius: 20px; padding: 30px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 16px 48px rgba(0,0,0,0.3); }
-    .auth-box h2 { color: #5B54D6; margin-bottom: 20px; font-size: 1.3rem; }
-    .auth-box input { width: 100%; padding: 12px; border: 1px solid #E0E0E0; border-radius: 12px; margin-bottom: 12px; font-size: 1rem; text-align: center; }
-    .auth-box .error { color: #EF4444; font-size: 0.8rem; margin-top: 8px; }
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
 
-    @media (max-width: 480px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-  </style>
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-overlay.show {
+                display: block;
+            }
+            .hamburger {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+                padding-top: 75px;
+            }
+            .top-header h1 {
+                font-size: 17px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .pool-box h2 {
+                font-size: 24px;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .stat-card p {
+                font-size: 18px;
+            }
+            .top-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            table {
+                font-size: 12px;
+            }
+            table th,
+            table td {
+                padding: 6px 8px;
+            }
+            .action-group .btn-sm {
+                font-size: 10px;
+                padding: 4px 8px;
+            }
+        }
+
+        .online-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .online-status.online {
+            background: var(--secondary);
+        }
+        .online-status.offline {
+            background: var(--danger);
+        }
+    </style>
 </head>
 <body>
-  <!-- TOAST -->
-  <div id="toast" class="toast"></div>
 
-  <!-- ADMIN LOGIN OVERLAY -->
-  <div class="auth-overlay" id="adminLoginOverlay">
-    <div class="auth-box">
-      <h2>🔐 Admin Login</h2>
-      <form id="adminLoginForm" onsubmit="return false;">
-        <input type="password" id="adminPassword" placeholder="Password" required autocomplete="off">
-        <button type="button" class="primary-btn" onclick="adminLogin()">Login</button>
-        <p class="error" id="adminLoginError"></p>
-      </form>
-    </div>
-  </div>
+    <!-- ===== HAMBURGER ===== -->
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-  <!-- MAIN ADMIN CONTENT -->
-  <div id="adminContent" class="admin-container" style="display:none;">
-
-    <!-- ===== DASHBOARD PAGE ===== -->
-    <div id="page-dashboard" class="page active">
-      <div class="app-header" style="margin:-16px -16px 16px;">
-        <div class="left">
-          <h1>⚡ Admin</h1>
-          <span class="role">Dashboard</span>
+    <!-- ===== SIDEBAR ===== -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <h2>📜 <span>Committee</span></h2>
+            <small>Admin Panel</small>
         </div>
-        <div class="actions">
-          <button onclick="navigate('bank')" title="Bank">🏦</button>
-          <button onclick="logoutAdmin()" title="Logout">🚪</button>
+        <div class="sidebar-nav">
+            <a class="active" onclick="navigateTo('dashboard')">📊 Dashboard</a>
+            <a onclick="navigateTo('members')">👥 Members <span class="badge" id="sideMemberCount">0</span></a>
+            <a onclick="navigateTo('history')">🏆 History <span class="badge" id="sideHistoryCount">0</span></a>
+            <a onclick="navigateTo('reports')">📄 Reports</a>
+            <a href="Gam user.html" target="_blank">👤 User Panel</a>
         </div>
-      </div>
+        <div class="sidebar-footer">Gao Committee v2.0</div>
+    </nav>
 
-      <!-- STATS -->
-      <div class="stats-grid">
-        <div class="stat-card" onclick="navigate('payments')" style="cursor:pointer;">
-          <div class="icon">💰</div>
-          <div class="number green" id="admTotalCollected">₹0</div>
-          <div class="label">Total Collected</div>
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="main-content" id="mainContent">
+
+        <!-- ===== TOP HEADER ===== -->
+        <div class="top-header">
+            <h1 id="pageTitle">📊 Admin Dashboard</h1>
+            <div class="user-info">
+                <span style="font-weight:500;">👑 Admin</span>
+                <span class="avatar">A</span>
+                <span style="font-size:12px;color:var(--text-muted);">
+                    <span class="online-status online" id="statusDot"></span>
+                    <span id="statusText">Online</span>
+                </span>
+            </div>
         </div>
-        <div class="stat-card" onclick="showUsersModal()" style="cursor:pointer;">
-          <div class="icon">👥</div>
-          <div class="number" id="admTotalUsers">0</div>
-          <div class="label">Total Users</div>
-        </div>
-        <div class="stat-card" onclick="navigate('manage')" style="cursor:pointer;">
-          <div class="icon">🔄</div>
-          <div class="number blue" id="admActiveCycles">0</div>
-          <div class="label">Active Cycles</div>
-        </div>
-        <div class="stat-card" onclick="navigateToPaymentsFilter('Approved')" style="cursor:pointer;">
-          <div class="icon">✅</div>
-          <div class="number green" id="admApprovedPayments">0</div>
-          <div class="label">Approved</div>
-        </div>
-        <div class="stat-card" onclick="navigateToPaymentsFilter('Pending')" style="cursor:pointer;">
-          <div class="icon">⏳</div>
-          <div class="number amber" id="admPendingPayments">0</div>
-          <div class="label">Pending</div>
-        </div>
-        <div class="stat-card" onclick="navigate('payments')" style="cursor:pointer;">
-          <div class="icon">📆</div>
-          <div class="number coral" id="admThisMonth">₹0</div>
-          <div class="label">This Month</div>
-        </div>
-      </div>
 
-      <!-- CYCLES OVERVIEW -->
-      <div class="section-h">📊 Cycles Overview</div>
-      <div class="card" style="padding:0;">
-        <div id="cyclesDashboardList"></div>
-      </div>
+        <!-- ===== DASHBOARD SECTION ===== -->
+        <div id="section-dashboard">
 
-      <!-- QUICK ACTIONS -->
-      <div class="section-h">⚡ Quick Actions</div>
-      <button class="card clickable" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;" onclick="navigate('manage')">
-        <div style="width:40px;height:40px;border-radius:50%;background:rgba(74,222,128,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🔄</div>
-        <span style="flex:1;font-weight:600;">Manage Cycles</span>
-        <span style="color:#9B9B9B;">›</span>
-      </button>
-      <button class="card clickable" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;" onclick="navigate('payments')">
-        <div style="width:40px;height:40px;border-radius:50%;background:rgba(245,166,35,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">💳</div>
-        <span style="flex:1;font-weight:600;">All Payments</span>
-        <span style="color:#9B9B9B;">›</span>
-      </button>
-      <button class="card clickable" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;" onclick="navigate('bids')">
-        <div style="width:40px;height:40px;border-radius:50%;background:rgba(184,169,232,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🏷️</div>
-        <span style="flex:1;font-weight:600;">Manage Bids (Auction)</span>
-        <span style="color:#9B9B9B;">›</span>
-      </button>
-    </div>
+            <!-- Loading -->
+            <div id="loadingIndicator" class="loading">
+                <div class="spinner"></div>
+                <p>⏳ Data load ho raha hai...</p>
+            </div>
 
-    <!-- ===== MANAGE CYCLES PAGE ===== -->
-    <div id="page-manage" class="page">
-      <div class="app-header" style="margin:-16px -16px 16px;">
-        <div class="left">
-          <button class="back-btn" onclick="navigate('dashboard')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
-          <h1>Manage Cycles</h1>
-        </div>
-      </div>
-      <div id="manageCyclesList"></div>
-      <button class="fab" onclick="navigate('new-cycle')">+</button>
-      <button class="card clickable" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;" onclick="navigate('bids')">
-        <div style="width:40px;height:40px;border-radius:50%;background:rgba(184,169,232,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🏷️</div>
-        <span style="flex:1;font-weight:600;">Manage Bids (Auction)</span>
-        <span style="color:#9B9B9B;">›</span>
-      </button>
-    </div>
+            <!-- Pool Box -->
+            <div class="pool-box" id="poolBox">
+                <div>💰 Total Committee Pool</div>
+                <h2 id="totalPoolDisplay">₹0</h2>
+                <small id="poolStatusText">⏳ Payment pending from members</small>
+            </div>
 
-    <!-- ===== NEW CYCLE PAGE ===== -->
-    <div id="page-new-cycle" class="page">
-      <div class="app-header" style="margin:-16px -16px 16px;">
-        <div class="left">
-          <button class="back-btn" onclick="navigate('manage')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
-          <h1>New Cycle</h1>
-        </div>
-      </div>
-      <form id="newCycleForm" style="padding:4px;">
-        <div class="form-field">
-          <input type="text" id="ncName" placeholder="Cycle Name (e.g., Batch A 2026)">
-        </div>
-        <div class="date-field">
-          <div class="info">
-            <div class="lbl">Start Date</div>
-            <div class="val" id="ncStartDateDisplay">Select date</div>
-          </div>
-          <label style="position:relative;cursor:pointer;font-size:1.4rem;">📅
-            <input type="date" id="ncStartDate" onchange="updateStartDateDisplay()" style="position:absolute;inset:0;opacity:0;">
-          </label>
-        </div>
-        <div class="form-field"><div class="label">Monthly Amount (₹)</div><input type="number" id="ncMonthlyAmount" min="1" value="2500" oninput="updateSummary()" required></div>
-        <div class="form-field"><div class="label">Total Members</div><input type="number" id="ncTotalMembers" min="2" value="20" oninput="updateSummary()" required></div>
-        <div class="form-field"><div class="label">Duration (Months)</div><input type="number" id="ncDuration" min="1" value="20" oninput="updateSummary()" required></div>
-        <div class="summary-card">
-          <div class="slbl">Total Pot</div>
-          <div class="sval" id="ncSummaryVal">₹50000</div>
-          <div class="shint" id="ncSummaryHint">20 × ₹2500 × 20 months</div>
-        </div>
-        <button type="submit" class="primary-btn" id="ncSubmitBtn">Create Cycle</button>
-      </form>
-    </div>
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card"><h4>👥 Total Members</h4><p id="statTotal">0</p></div>
+                <div class="stat-card green"><h4>✅ Paid This Month</h4><p id="statPaid">0</p></div>
+                <div class="stat-card yellow"><h4>⏳ Pending</h4><p id="statPending">0</p></div>
+                <div class="stat-card red"><h4>🏆 Won</h4><p id="statWon">0</p></div>
+            </div>
 
-    <!-- ===== CYCLE DETAIL PAGE ===== -->
-    <div id="page-cycle-detail" class="page">
-      <div class="app-header" style="margin:-16px -16px 16px;">
-        <div class="left">
-          <button class="back-btn" onclick="navigate('manage')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
-          <h1 id="cdTitle">Cycle</h1>
-        </div>
-        <div class="actions">
-          <button onclick="toggleCycleStatus()" title="Toggle Status">🔄</button>
-          <button onclick="deleteCurrentCycle()" title="Delete">🗑️</button>
-        </div>
-      </div>
-
-      <!-- Cycle Summary -->
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:start;">
-          <div>
-            <div style="font-size:0.65rem;color:#9B9B9B;font-weight:600;text-transform:uppercase;">Total Pot</div>
-            <div style="font-size:1.6rem;font-weight:800;color:#1A1A1A;" id="cdTotalPot">₹0</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:0.65rem;color:#9B9B9B;font-weight:600;text-transform:uppercase;">Progress</div>
-            <div style="font-size:1.6rem;font-weight:800;color:#5B54D6;" id="cdProgress">0%</div>
-          </div>
-        </div>
-        <div style="width:100%;height:8px;background:#F0F0F0;border-radius:20px;overflow:hidden;margin-top:8px;">
-          <div id="cdProgressFill" style="height:100%;background:#5B54D6;border-radius:20px;transition:width 0.6s ease;width:0%;"></div>
-        </div>
-        <div class="stats-grid" style="margin-top:12px;padding-top:12px;border-top:1px solid #F0F0F0;margin-bottom:0;">
-          <div class="stat-card"><div class="icon">💰</div><div class="number" id="cdMonthly">₹0</div><div class="label">Monthly</div></div>
-          <div class="stat-card"><div class="icon">👥</div><div class="number" id="cdMembersCount">0</div><div class="label">Members</div></div>
-          <div class="stat-card"><div class="icon">📅</div><div class="number" id="cdDuration">0</div><div class="label">Months</div></div>
-        </div>
-      </div>
-
-      <!-- Members & Payments Tabs -->
-      <div class="tabs">
-        <button class="active" onclick="switchDetailTab('members',this)">👥 Members</button>
-        <button onclick="switchDetailTab('payments',this)">💳 Payments</button>
-      </div>
-
-      <div class="card" id="cdMembersCard" style="padding:0;"></div>
-      <div class="card" id="cdPaymentsCard" style="padding:0;display:none;"></div>
-    </div>
-
-    <!-- ===== ALL PAYMENTS PAGE ===== -->
-    <div id="page-payments" class="page">
-      <div class="app-header" style="margin:-16px -16px 16px;">
-        <div class="left">
-          <button class="back-btn" onclick="navigate('dashboard')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
-          <h1>All Payments</h1>
-        </div>
-      </div>
-      <div class="tabs">
-        <button class="active" onclick="filterPayments('all', this)">All</button>
-        <button onclick="filterPayments('Pending', this)">⏳ Pending</button>
-        <button onclick="filterPayments('Approved', this)">✅ Approved</button>
-      </div>
-      <div class="card" style="padding:0;" id="allPaymentsList"></div>
-    </div>
-
-
-    <!-- ===== BIDS MANAGEMENT PAGE ===== -->
-    <div id="page-bids" class="page">
-      <div class="app-header" style="margin:-16px -16px 16px;">
-        <div class="left">
-          <button onclick="navigate('dashboard')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
-          <h1>Manage Bids</h1>
-        </div>
-      </div>
-      <div class="card" id="bidsList" style="padding:0;">
-        <div class="empty"><div class="emoji">🏷️</div><div class="text">Loading bids...</div></div>
-      </div>
-    </div>
-
-
-    <!-- ===== BANK DETAILS PAGE ===== -->
-    <div id="page-bank" class="page">
-      <div class="app-header" style="margin:-16px -16px 16px;">
-        <div class="left">
-          <button class="back-btn" onclick="navigate('dashboard')" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;">←</button>
-          <h1>Bank Details</h1>
-        </div>
-      </div>
-      <div class="card">
-        <form id="bankForm">
-          <div class="form-field">
-            <div class="label">UPI ID</div>
-            <input type="text" id="bankUpi" placeholder="example@upi">
-          </div>
-          <div class="form-field">
-            <div class="label">Account Name</div>
-            <input type="text" id="bankAccName" placeholder="John Doe">
-          </div>
-          <div class="form-field">
-            <div class="label">Account Number</div>
-            <input type="text" id="bankAccNo" placeholder="1234567890">
-          </div>
-          <div class="form-field">
-            <div class="label">IFSC Code</div>
-            <input type="text" id="bankIfsc" placeholder="SBIN0001234">
-          </div>
-          <button type="submit" class="primary-btn">💾 Save</button>
-        </form>
-      </div>
-    </div>
-
-  </div>
-  <!-- LOGIN SCRIPT (runs immediately, before Firebase module loads) -->
-  <script>
-    const ADMIN_PASSWORD = "admin123";
-
-    window.adminLogin = function() {
-      const pwdEl = document.getElementById('adminPassword');
-      const errEl = document.getElementById('adminLoginError');
-      if (!pwdEl) return;
-      const pwd = pwdEl.value;
-      errEl.textContent = '';
-      if (pwd === ADMIN_PASSWORD) {
-        document.getElementById('adminLoginOverlay').style.display = 'none';
-        document.getElementById('adminContent').style.display = 'block';
-        sessionStorage.setItem('admin_logged', '1');
-        // Wait for module script to be ready, then start
-        waitAndStart();
-      } else {
-        errEl.textContent = '❌ Wrong password!';
-      }
-    };
-
-    // Wait up to 10 seconds for the module script to expose _startListening
-    window._loginReady = false;
-    function waitAndStart(attempts) {
-      attempts = attempts || 0;
-      if (window._startListening) {
-        window._createUsersModal && window._createUsersModal();
-        window._startListening();
-        window._loginReady = true;
-      } else if (attempts < 100) {
-        setTimeout(function() { waitAndStart(attempts + 1); }, 100);
-      } else {
-        console.log('⚠️ Module script did not load after 10 seconds');
-      }
-    }
-
-    window.logoutAdmin = function() {
-      sessionStorage.removeItem('admin_logged');
-      location.reload();
-    };
-
-    // Auto-login if previously logged in
-    if (sessionStorage.getItem('admin_logged') === '1') {
-      document.getElementById('adminLoginOverlay').style.display = 'none';
-      document.getElementById('adminContent').style.display = 'block';
-      waitAndStart();
-    }
-  </script>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, push, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDT1Gl3Z_mLFaY6i0e01TKX3YUtVrplew8",
-      authDomain: "my-hellping.firebaseapp.com",
-      databaseURL: "https://my-hellping-default-rtdb.firebaseio.com",
-      projectId: "my-hellping",
-      storageBucket: "my-hellping.firebasestorage.app",
-      messagingSenderId: "537498438505",
-      appId: "1:537498438505:web:204dc1653c612edc75cbf8"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    let allData = { users: {}, cycles: {}, bids: {}, bankDetails: {} };
-    let currentCycleDetail = null;
-    let paymentFilter = 'all';
-
-    // ===== HELPERS =====
-    function showToast(msg, kind='success') {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.className = 'toast ' + kind;
-      t.style.display = 'block';
-      setTimeout(() => { t.style.display = 'none'; }, 2800);
-    }
-    function fmtINR(n) { return '₹' + Number(n||0).toLocaleString('en-IN'); }
-    function fmtMonthYear(s) {
-      if (!s) return '-';
-      try { const d = new Date(s); if (isNaN(d)) return s; return d.toLocaleString('default',{month:'short',year:'numeric'}); }
-      catch { return s; }
-    }
-    function getCurrentMonth() {
-      const m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      const d = new Date(); return m[d.getMonth()] + " " + d.getFullYear();
-    }
-    function getCyclesArray() {
-      return Object.entries(allData.cycles||{}).map(([id,c]) => ({id,...c}));
-    }
-    function calcCycleCollection(cycle) {
-      const payments = cycle.payments || {};
-      return Object.values(payments).filter(p=>p.status==='Approved').reduce((s,p)=>s+Number(p.amount||0),0);
-    }
-
-    // ===== NAVIGATION =====
-    window.navigate = function(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      const t = document.getElementById('page-'+pageId);
-      if (t) t.classList.add('active');
-      window.scrollTo({top:0,behavior:'smooth'});
-      if (pageId==='dashboard') renderDashboard();
-      else if (pageId==='manage') renderManage();
-      else if (pageId==='new-cycle') resetNewCycleForm();
-      else if (pageId==='payments') renderAllPayments();
-      else if (pageId==='bids') renderBids();
-      else if (pageId==='bank') fillBankForm();
-    };
-
-    // Expose functions for the login script
-    window._startListening = startListening;
-    window._createUsersModal = createUsersModal;
-
-    // If already logged in (auto-login), start listening now
-    if (sessionStorage.getItem('admin_logged') === '1') {
-      createUsersModal();
-      startListening();
-    }
-
-    // ===== REAL-TIME DATA =====
-    function startListening() {
-      onValue(ref(db), (snap) => {
-        if (!snap.exists()) { allData = {users:{},cycles:{},bids:{},bankDetails:{}}; }
-        else {
-          const d = snap.val();
-          allData = { users: d.users||{}, cycles: d.cycles||{}, bids: d.bids||{}, bankDetails: d.bankDetails||{} };
-        }
-        // Re-render active page
-        const ap = document.querySelector('.page.active');
-        if (ap) {
-          const id = ap.id.replace('page-','');
-          if (id==='dashboard') renderDashboard();
-          else if (id==='manage') renderManage();
-          else if (id==='payments') renderAllPayments();
-          else if (id==='cycle-detail' && currentCycleDetail) renderCycleDetail(currentCycleDetail);
-          else if (id==='bids') renderBids();
-          else if (id==='bank') fillBankForm();
-        }
-      });
-    }
-
-    // ===== DASHBOARD =====
-    function renderDashboard() {
-      const cycles = getCyclesArray();
-      const active = cycles.filter(c=>(c.status||'Active')==='Active');
-      const completed = cycles.filter(c=>c.status==='Completed');
-
-      // Stats
-      document.getElementById('admTotalUsers').innerText = Object.keys(allData.users||{}).length;
-      document.getElementById('admActiveCycles').innerText = active.length;
-
-      let totalCollected = 0, thisMonth = 0, approvedCnt = 0, pendingCnt = 0;
-      cycles.forEach(c => {
-        Object.values(c.payments||{}).forEach(p => {
-          if (p.status==='Approved') {
-            totalCollected += Number(p.amount||0); approvedCnt++;
-            if (p.month===getCurrentMonth()) thisMonth += Number(p.amount||0);
-          } else if (p.status==='Pending') pendingCnt++;
-        });
-      });
-      document.getElementById('admTotalCollected').innerText = fmtINR(totalCollected);
-      document.getElementById('admApprovedPayments').innerText = approvedCnt;
-      document.getElementById('admPendingPayments').innerText = pendingCnt;
-      document.getElementById('admThisMonth').innerText = fmtINR(thisMonth);
-
-      // Cycles overview
-      const listEl = document.getElementById('cyclesDashboardList');
-      listEl.innerHTML = '';
-      if (cycles.length === 0) {
-        listEl.innerHTML = `<div class="empty"><div class="emoji">🔄</div><div class="text">No cycles yet</div></div>`;
-      } else {
-        // Active first, then completed
-        const sorted = [...active, ...completed];
-        sorted.forEach(c => {
-          const s = c.status||'Active';
-          const sc = s==='Active'?'active':s==='Completed'?'completed':'paused';
-          const monthlyPot = Number(c.monthlyAmount||0) * Number(c.totalMembers||0);
-          const coll = calcCycleCollection(c);
-          const pct = monthlyPot>0 ? Math.min(100,Math.round((coll/monthlyPot)*100)) : 0;
-          listEl.innerHTML += `
-            <div class="cycle-dash-card" onclick="openCycleDetail('${c.id}')">
-              <div style="flex:1;">
-                <div style="font-weight:700;font-size:0.95rem;">${c.name||'Unnamed'}</div>
-                <div style="font-size:0.75rem;color:#6B6B6B;">${fmtINR(c.monthlyAmount)} / member • ${c.totalMembers} members</div>
-                <div style="margin-top:4px;height:4px;background:#F0F0F0;border-radius:10px;overflow:hidden;max-width:120px;">
-                  <div style="height:100%;background:#5B54D6;border-radius:10px;width:${pct}%;"></div>
+            <!-- Add Member -->
+            <div class="card">
+                <div class="card-title">➕ Add New Member</div>
+                <div class="form-row">
+                    <input type="text" id="mName" placeholder="Full Name">
+                    <input type="tel" id="mPhone" placeholder="Phone Number">
+                    <input type="number" id="mKist" placeholder="Monthly Kist (₹)">
+                    <button onclick="addMember()">✅ Add Member</button>
                 </div>
-              </div>
-              <div style="text-align:right;">
-                <div style="font-weight:800;font-size:1.05rem;">${monthlyPot.toLocaleString('en-IN')}</div>
-                <span class="status-badge ${s}">${s}</span>
-              </div>
             </div>
-          `;
-        });
-      }
-    }
 
-    // ===== MANAGE CYCLES =====
-    function renderManage() {
-      const cycles = getCyclesArray();
-      const list = document.getElementById('manageCyclesList');
-      list.innerHTML = '';
-      if (cycles.length===0) {
-        list.innerHTML = `<div class="card"><div class="empty"><div class="emoji">🔄</div><div class="text">Koi cycle nahi</div></div></div>`;
-        return;
-      }
-      cycles.forEach(c => {
-        const s = c.status||'Active';
-        const sc = s==='Active'?'active':s==='Completed'?'completed':'paused';
-        const monthlyTarget = Number(c.monthlyAmount||0) * Number(c.totalMembers||0);
-        list.innerHTML += `
-          <div class="manage-item">
-            <div class="top">
-              <div onclick="openCycleDetail('${c.id}')" style="cursor:pointer;flex:1;">
-                <div class="amount">${monthlyTarget.toLocaleString('en-IN')}</div>
-                <div class="name">${c.name||'Unnamed Cycle'}</div>
-              </div>
-              <span class="status-badge ${sc}" onclick="toggleCycleStatusExternal('${c.id}')">${s}</span>
-            </div>
-            <div class="mid">
-              <div>📅 Start: ${fmtMonthYear(c.startDate)}</div>
-              <div>💰 <span class="amt">${fmtINR(c.monthlyAmount)}</span></div>
-            </div>
-            <div class="bot">
-              <div class="members">👥 ${c.totalMembers} Members • ${c.durationMonths}m</div>
-              <button onclick="deleteCycleExternal('${c.id}','${(c.name||'Cycle').replace(/'/g,"\\\'")}')" style="background:none;border:none;color:#FF6B6B;cursor:pointer;font-size:1.2rem;">🗑️</button>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    // ===== NEW CYCLE FORM =====
-    function resetNewCycleForm() {
-      document.getElementById('ncName').value = '';
-      document.getElementById('ncStartDate').value = new Date().toISOString().slice(0,10);
-      document.getElementById('ncMonthlyAmount').value = 2500;
-      document.getElementById('ncTotalMembers').value = 20;
-      document.getElementById('ncDuration').value = 20;
-      updateStartDateDisplay();
-      updateSummary();
-    }
-    window.updateStartDateDisplay = function() {
-      const v = document.getElementById('ncStartDate').value;
-      document.getElementById('ncStartDateDisplay').innerText = v ? fmtMonthYear(v) : 'Select date';
-    };
-    window.updateSummary = function() {
-      const a = Number(document.getElementById('ncMonthlyAmount').value)||0;
-      const m = Number(document.getElementById('ncTotalMembers').value)||0;
-      const d = Number(document.getElementById('ncDuration').value)||0;
-      const t = a*m*d;
-      document.getElementById('ncSummaryVal').innerText = fmtINR(t);
-      document.getElementById('ncSummaryHint').innerText = `${m} × ${fmtINR(a)} × ${d} months`;
-    };
-
-    document.getElementById('newCycleForm').addEventListener('submit', async(e) => {
-      e.preventDefault();
-      const btn = document.getElementById('ncSubmitBtn');
-      const name = document.getElementById('ncName').value.trim()||'Cycle '+ (Object.keys(allData.cycles).length+1);
-      const startDate = document.getElementById('ncStartDate').value||new Date().toISOString().slice(0,10);
-      const ma = Number(document.getElementById('ncMonthlyAmount').value);
-      const tm = Number(document.getElementById('ncTotalMembers').value);
-      const dm = Number(document.getElementById('ncDuration').value);
-      if (!ma||ma<1) return showToast('Monthly amount daalein','error');
-      if (!tm||tm<2) return showToast('Min 2 members','error');
-      btn.disabled=true; btn.innerText='⏳ Creating...';
-      try {
-        const newRef = push(ref(db, 'cycles'));
-        await set(newRef, {name,startDate,monthlyAmount:ma,totalMembers:tm,durationMonths:dm,status:'Active',createdAt:Date.now(),members:{},payments:{}});
-        showToast('✅ Cycle created!'); navigate('manage');
-      } catch(err) { showToast('❌ '+err.message,'error'); }
-      finally { btn.disabled=false; btn.innerText='Create Cycle'; }
-    });
-
-    // ===== CYCLE DETAIL =====
-    window.openCycleDetail = function(cid) {
-      currentCycleDetail = cid;
-      renderCycleDetail(cid);
-      navigate('cycle-detail');
-    };
-    function renderCycleDetail(cid) {
-      const c = allData.cycles[cid];
-      if (!c) return;
-      document.getElementById('cdTitle').innerText = c.name||'Cycle';
-      const isCompleted = (c.status||'Active')==='Completed';
-      const totalPot = Number(c.monthlyAmount||0)*Number(c.totalMembers||0)*Number(c.durationMonths||1);
-      const collected = calcCycleCollection(c);
-      // Completed cycles show 0% progress
-      const pct = isCompleted ? 0 : (totalPot>0 ? Math.min(100,Math.round((collected/totalPot)*100)) : 0);
-      document.getElementById('cdTotalPot').innerText = fmtINR(totalPot);
-      document.getElementById('cdProgress').innerText = pct+'%';
-      document.getElementById('cdProgressFill').style.width = pct+'%';
-      document.getElementById('cdMonthly').innerText = fmtINR(c.monthlyAmount);
-      document.getElementById('cdMembersCount').innerText = c.totalMembers||0;
-      document.getElementById('cdDuration').innerText = c.durationMonths||0;
-
-      // Members
-      const membersEl = document.getElementById('cdMembersCard');
-      const members = c.members||{};
-      const memberArr = Object.entries(members).map(([uid,m])=>({uid,...m})).sort((a,b)=>(a.position||0)-(b.position||0));
-      if (memberArr.length===0) {
-        membersEl.innerHTML = `<div class="empty"><div class="emoji">👥</div><div class="text">Koi member nahi</div></div>`;
-      } else {
-        membersEl.innerHTML = memberArr.map(m => {
-          const s = m.turnStatus||'Pending';
-          const cls = s==='Received'?'received':s==='Current'?'current':'pending';
-          return `<div class="member-row ${s==='Current'?'current':''}">
-            <div class="member-pos">#${m.position||'?'}</div>
-            <div class="member-info"><div class="member-name">${m.name||'Unknown'} ${s==='Current'?'👑':''}</div><div class="member-phone">${m.phone||'-'}</div></div>
-            <span class="turn-badge ${cls}">${s}</span>
-          </div>`;
-        }).join('');
-      }
-
-      // Payments
-      const payEl = document.getElementById('cdPaymentsCard');
-      const payments = c.payments||{};
-      const payArr = Object.entries(payments).map(([id,p])=>({id,...p})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-      if (payArr.length===0) {
-        payEl.innerHTML = `<div class="empty"><div class="emoji">💳</div><div class="text">Koi payment nahi</div></div>`;
-      } else {
-        payEl.innerHTML = payArr.map(p => {
-          const s = p.status||'Pending';
-          const cls = s==='Approved'?'received':'pending';
-          return `<div class="member-row">
-            <div class="member-pos" style="background:rgba(74,222,128,0.15);color:#166534;">💰</div>
-            <div class="member-info"><div class="member-name">${p.userName||'Unknown'}</div><div class="member-phone">${p.month} • UTR: ${p.utr||'--'}</div></div>
-            <div style="text-align:right;">
-              <div style="font-weight:700;font-size:0.85rem;">${fmtINR(p.amount)}</div>
-              <span class="turn-badge ${cls}" style="margin-top:2px;display:inline-block;">${s}</span>
-              ${s==='Pending' ? `<div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;">
-                <button class="btn-sm btn-approve" onclick="approveCyclePayment('${cid}','${p.id}')">✅</button>
-                <button class="btn-sm btn-reject" onclick="rejectCyclePayment('${cid}','${p.id}')">❌</button>
-              </div>` : ''}
-            </div>
-          </div>`;
-        }).join('');
-      }
-    }
-    window.switchDetailTab = function(tab, btn) {
-      document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('cdMembersCard').style.display = tab==='members'?'block':'none';
-      document.getElementById('cdPaymentsCard').style.display = tab==='payments'?'block':'none';
-    };
-
-    // ===== CYCLE ACTIONS =====
-    window.toggleCycleStatus = async function() {
-      if (!currentCycleDetail) return;
-      const c = allData.cycles[currentCycleDetail];
-      if (!c) return;
-      const ns = (c.status||'Active')==='Active'?'Completed':'Active';
-      try { await update(ref(db, 'cycles/'+currentCycleDetail), {status:ns}); showToast('✅ Status: '+ns); }
-      catch(e) { showToast('❌ '+e.message,'error'); }
-    };
-    window.toggleCycleStatusExternal = async function(id) {
-      const c = allData.cycles[id];
-      if (!c) return;
-      const ns = (c.status||'Active')==='Active'?'Completed':'Active';
-      try { await update(ref(db, 'cycles/'+id), {status:ns}); showToast('✅ Status: '+ns); }
-      catch(e) { showToast('❌ '+e.message,'error'); }
-    };
-    window.deleteCurrentCycle = async function() {
-      const c = allData.cycles[currentCycleDetail];
-      if (!c || !confirm(`"${c.name||'Cycle'}" delete karna hai?`)) return;
-      try { await remove(ref(db, 'cycles/'+currentCycleDetail)); showToast('🗑️ Deleted'); navigate('manage'); }
-      catch(e) { showToast('❌ '+e.message,'error'); }
-    };
-    window.deleteCycleExternal = async function(id, name) {
-      if (!confirm(`"${name}" delete karna hai?`)) return;
-      try { await remove(ref(db, 'cycles/'+id)); showToast('🗑️ Deleted'); }
-      catch(e) { showToast('❌ '+e.message,'error'); }
-    };
-
-    // ===== PAYMENT ACTIONS =====
-    window.approveCyclePayment = async function(cid, pid) {
-      try { await update(ref(db, `cycles/${cid}/payments/${pid}`), {status:'Approved'}); showToast('✅ Approved'); }
-      catch(e) { showToast('❌ '+e.message,'error'); }
-    };
-    window.rejectCyclePayment = async function(cid, pid) {
-      try { await update(ref(db, `cycles/${cid}/payments/${pid}`), {status:'Rejected'}); showToast('❌ Rejected'); }
-      catch(e) { showToast('❌ '+e.message,'error'); }
-    };
-
-    // ===== ALL PAYMENTS PAGE =====
-    window.filterPayments = function(f, btn) {
-      paymentFilter = f;
-      document.querySelectorAll('#page-payments .tabs button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      renderAllPayments();
-    };
-    function renderAllPayments() {
-      const list = document.getElementById('allPaymentsList');
-      const cycles = getCyclesArray();
-      let allPays = [];
-      cycles.forEach(c => {
-        Object.entries(c.payments||{}).forEach(([pid,p]) => {
-          allPays.push({id:pid, cycleId:c.id, cycleName:c.name, ...p});
-        });
-      });
-      allPays.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-
-      if (paymentFilter!=='all') allPays = allPays.filter(p=>(p.status||'Pending')===paymentFilter);
-
-      list.innerHTML = '';
-      if (allPays.length===0) {
-        list.innerHTML = `<div class="empty"><div class="emoji">💳</div><div class="text">Koi payments nahi</div></div>`;
-        return;
-      }
-      allPays.forEach(p => {
-        const s = p.status||'Pending';
-        const cls = s==='Approved'?'received':'pending';
-        list.innerHTML += `<div class="member-row">
-          <div class="member-pos" style="background:rgba(74,222,128,0.15);color:#166534;">💰</div>
-          <div class="member-info">
-            <div class="member-name">${p.userName||'Unknown'} <span style="font-size:0.7rem;color:#9B9B9B;">(${p.cycleName||'--'})</span></div>
-            <div class="member-phone">${p.month} • UTR: ${p.utr||'--'} | ${p.userPhone||''}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-weight:700;font-size:0.85rem;">${fmtINR(p.amount)}</div>
-            <span class="turn-badge ${cls}" style="margin-top:2px;display:inline-block;">${s}</span>
-            ${s==='Pending'?`<div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;">
-              <button class="btn-sm btn-approve" onclick="approveCyclePayment('${p.cycleId}','${p.id}')">✅</button>
-              <button class="btn-sm btn-reject" onclick="rejectCyclePayment('${p.cycleId}','${p.id}')">❌</button>
-            </div>`:''}
-          </div>
-        </div>`;
-      });
-    }
-
-    // ===== USERS MODAL =====
-    window.showUsersModal = function() {
-      const modal = document.getElementById('usersModal');
-      if (!modal) {
-        createUsersModal();
-        return setTimeout(() => showUsersModal(), 100);
-      }
-      const list = document.getElementById('usersModalList');
-      const users = allData.users || {};
-      const uids = Object.keys(users);
-      
-      // Calculate stats for each user
-      const userStats = uids.map(uid => {
-        const u = users[uid];
-        let totalDeposit = 0, totalBids = 0;
-        // Total deposit from approved payments across all cycles
-        Object.values(allData.cycles||{}).forEach(c => {
-          Object.values(c.payments||{}).forEach(p => {
-            if (p.status === 'Approved' && p.userId === uid) totalDeposit += Number(p.amount||0);
-          });
-        });
-        // Total bids count for this user
-        Object.values(allData.bids||{}).forEach(b => {
-          if (b.userId === uid) totalBids++;
-        });
-        // Cycles this user is a member of
-        let cycleNames = [];
-        Object.entries(allData.cycles||{}).forEach(([cid, c]) => {
-          const members = c.members||{};
-          if (members[uid]) cycleNames.push(c.name||cid);
-        });
-        return { uid, ...u, totalDeposit, totalBids, cycleNames };
-      });
-
-      // Apply search filter
-      const searchQuery = (document.getElementById('usersSearchInput')?.value || '').toLowerCase().trim();
-      const filtered = searchQuery
-        ? userStats.filter(us =>
-            (us.name||'').toLowerCase().includes(searchQuery) ||
-            (us.phone||'').includes(searchQuery)
-          )
-        : userStats;
-
-      if (uids.length === 0) {
-        list.innerHTML = '<div class="empty"><div class="emoji">👥</div><div class="text">No users yet</div></div>';
-      } else if (filtered.length === 0) {
-        list.innerHTML = '<div class="empty"><div class="emoji">🔍</div><div class="text">Koi user nahi mila "'+searchQuery+'" se</div></div>';
-      } else {
-        list.innerHTML = filtered.map(us => {
-          const memberPills = us.cycleNames.length > 0
-            ? us.cycleNames.map(cn => `<span style="background:rgba(91,84,214,0.1);color:#5B54D6;padding:2px 8px;border-radius:100px;font-size:0.65rem;margin-right:4px;">${cn}</span>`).join('')
-            : '<span style="color:#9B9B9B;font-size:0.7rem;">No cycle</span>';
-          return `
-            <div class="member-row" style="align-items:flex-start;">
-              <div class="member-pos">${(us.name||'?')[0]}</div>
-              <div class="member-info">
-                <div class="member-name">${us.name||'Unknown'}</div>
-                <div class="member-phone">📧 ${us.email||'-'} • 📱 ${us.phone||'-'}</div>
-                <div style="margin-top:4px;">${memberPills}</div>
-                <div style="margin-top:6px;display:flex;gap:12px;font-size:0.7rem;color:#6B6B6B;">
-                  <span>💰 Deposit: <strong style="color:#16A34A;">${fmtINR(us.totalDeposit)}</strong></span>
-                  <span>🏷️ Bids: <strong style="color:#F5A623;">${us.totalBids}</strong></span>
+            <!-- Release Pool -->
+            <div class="card">
+                <div class="card-title">🏆 Release Committee Pool</div>
+                <div class="form-row" style="grid-template-columns:1fr auto;">
+                    <select id="winnerSelect">
+                        <option value="">-- Select Winner --</option>
+                    </select>
+                    <button id="payoutBtn" class="btn-primary" onclick="releasePool()" disabled>
+                        🔒 Pool Release
+                    </button>
                 </div>
-              </div>
-              <div style="text-align:right;display:flex;flex-direction:column;gap:4px;">
-                <span style="font-size:0.6rem;color:#9B9B9B;">${us.role||'member'}</span>
-                <button class="btn-sm btn-outline-sm" onclick="editUserModal('${us.uid}')" style="font-size:0.65rem;">✏️ Edit</button>
-              </div>
+                <p id="payoutStatus" style="margin-top:10px;font-size:13px;color:var(--text-muted);">
+                    ⏳ Sabhi members ka payment pending hai.
+                </p>
             </div>
-          `;
-        }).join('');
-      }
-      modal.style.display = 'flex';
-    };
 
-    // ===== FILTER USERS (SEARCH) =====
-    window.filterUsers = function() {
-      // Re-call showUsersModal with current search value
-      const modal = document.getElementById('usersModal');
-      if (!modal || modal.style.display !== 'flex') return;
-      const list = document.getElementById('usersModalList');
-      const users = allData.users || {};
-      const uids = Object.keys(users);
-      const searchQuery = (document.getElementById('usersSearchInput')?.value || '').toLowerCase().trim();
-
-      const userStats = uids.map(uid => {
-        const u = users[uid];
-        let totalDeposit = 0, totalBids = 0;
-        Object.values(allData.cycles||{}).forEach(c => {
-          Object.values(c.payments||{}).forEach(p => {
-            if (p.status === 'Approved' && p.userId === uid) totalDeposit += Number(p.amount||0);
-          });
-        });
-        Object.values(allData.bids||{}).forEach(b => {
-          if (b.userId === uid) totalBids++;
-        });
-        let cycleNames = [];
-        Object.entries(allData.cycles||{}).forEach(([cid, c]) => {
-          const members = c.members||{};
-          if (members[uid]) cycleNames.push(c.name||cid);
-        });
-        return { uid, ...u, totalDeposit, totalBids, cycleNames };
-      });
-
-      const filtered = searchQuery
-        ? userStats.filter(us =>
-            (us.name||'').toLowerCase().includes(searchQuery) ||
-            (us.phone||'').includes(searchQuery)
-          )
-        : userStats;
-
-      if (filtered.length === 0) {
-        list.innerHTML = '<div class="empty"><div class="emoji">🔍</div><div class="text">Koi user nahi mila</div></div>';
-      } else {
-        list.innerHTML = filtered.map(us => {
-          const memberPills = us.cycleNames.length > 0
-            ? us.cycleNames.map(cn => `<span style="background:rgba(91,84,214,0.1);color:#5B54D6;padding:2px 8px;border-radius:100px;font-size:0.65rem;margin-right:4px;">${cn}</span>`).join('')
-            : '<span style="color:#9B9B9B;font-size:0.7rem;">No cycle</span>';
-          return `
-            <div class="member-row" style="align-items:flex-start;">
-              <div class="member-pos">${(us.name||'?')[0]}</div>
-              <div class="member-info">
-                <div class="member-name">${us.name||'Unknown'}</div>
-                <div class="member-phone">📧 ${us.email||'-'} • 📱 ${us.phone||'-'}</div>
-                <div style="margin-top:4px;">${memberPills}</div>
-                <div style="margin-top:6px;display:flex;gap:12px;font-size:0.7rem;color:#6B6B6B;">
-                  <span>💰 Deposit: <strong style="color:#16A34A;">${fmtINR(us.totalDeposit)}</strong></span>
-                  <span>🏷️ Bids: <strong style="color:#F5A623;">${us.totalBids}</strong></span>
+            <!-- Members Table -->
+            <div class="card">
+                <div class="card-title">👥 Members Management <span class="count" id="adminMemberCount">0</span></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Kist</th>
+                                <th>Status</th>
+                                <th class="no-print">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminMembersBody">
+                            <tr>
+                                <td colspan="6" style="text-align:center;color:#94a3b8;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-              </div>
-              <div style="text-align:right;display:flex;flex-direction:column;gap:4px;">
-                <span style="font-size:0.6rem;color:#9B9B9B;">${us.role||'member'}</span>
-                <button class="btn-sm btn-outline-sm" onclick="editUserModal('${us.uid}')" style="font-size:0.65rem;">✏️ Edit</button>
-              </div>
             </div>
-          `;
-        }).join('');
-      }
-    };
 
-    // ===== CREATE USERS MODAL HTML =====
-    function createUsersModal() {
-      const html = `
-        <div class="modal-overlay" id="usersModal" style="display:none;" onclick="if(event.target===this)closeUsersModal()">
-          <div class="modal-box" style="max-width:480px;max-height:85vh;overflow-y:auto;position:relative;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-              <h2 style="margin:0;">👥 All Users</h2>
-              <button onclick="closeUsersModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;">✕</button>
+            <!-- History -->
+            <div class="card">
+                <div class="card-title">🏆 Payout History <span class="count" id="adminHistoryCount">0</span></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Winner</th>
+                                <th>Phone</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminHistoryBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center;color:#94a3b8;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div style="margin-bottom:12px;">
-              <input type="text" id="usersSearchInput" placeholder="🔍 Naam ya phone se search karein..." oninput="filterUsers()"
-                style="width:100%;padding:10px 14px;border:1px solid #E0E0E0;border-radius:12px;font-size:0.9rem;background:#F8FAFC;outline:none;transition:border-color 0.2s;"
-                onfocus="this.style.borderColor='#5B54D6'" onblur="this.style.borderColor='#E0E0E0'">
-            </div>
-            <div id="usersModalList"></div>
-            <button class="primary-btn" style="margin-top:16px;background:#16A34A;box-shadow:0 2px 8px rgba(22,163,74,0.3);" onclick="addNewUserModal()">
-              ➕ Add New User
-            </button>
-          </div>
+
         </div>
-        <div class="modal-overlay" id="editUserModal" style="display:none;" onclick="if(event.target===this)closeEditUserModal()">
-          <div class="modal-box" style="max-width:420px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-              <h2 style="margin:0;" id="editUserModalTitle">✏️ Edit User</h2>
-              <button onclick="closeEditUserModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;">✕</button>
+
+        <!-- ===== MEMBERS SECTION ===== -->
+        <div id="section-members" class="hidden">
+            <div class="card">
+                <div class="card-title">👥 All Members <span class="count" id="memberListCount">0</span></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Kist</th>
+                                <th>Status</th>
+                                <th>Won</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberListBody"></tbody>
+                    </table>
+                </div>
             </div>
-            <input type="hidden" id="editUserUid">
-            <div class="form-field"><div class="label">Name</div><input type="text" id="editUserName" placeholder="Full Name"></div>
-            <div class="form-field"><div class="label">Email</div><input type="text" id="editUserEmail" placeholder="Email"></div>
-            <div class="form-field"><div class="label">Phone</div><input type="text" id="editUserPhone" placeholder="Phone Number"></div>
-            <div class="form-field">
-              <div class="label">Password</div>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <input type="password" id="editUserPassword" placeholder="Set Password" style="flex:1;">
-                <button type="button" onclick="toggleUserPasswordVisibility()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;" id="toggleUserPasswordBtn">👁️</button>
-              </div>
-              <div style="font-size:0.7rem;color:#9B9B9B;margin-top:4px;" id="editUserPasswordHint"></div>
-            </div>
-            <button class="primary-btn" onclick="saveUserEdit()">💾 Save Changes</button>
-            <button class="primary-btn danger" style="margin-top:8px;" onclick="deleteUser()">🗑️ Delete User</button>
-          </div>
         </div>
-      `;
-      document.body.insertAdjacentHTML('beforeend', html);
-    };
 
-    window.closeUsersModal = function() {
-      document.getElementById('usersModal').style.display = 'none';
-    };
-
-    // ===== ADD NEW USER =====
-    window.addNewUserModal = function() {
-      document.getElementById('editUserUid').value = '';
-      document.getElementById('editUserName').value = '';
-      document.getElementById('editUserEmail').value = '';
-      document.getElementById('editUserPhone').value = '';
-      document.getElementById('editUserPassword').value = '';
-      document.getElementById('editUserPassword').type = 'password';
-      document.getElementById('toggleUserPasswordBtn').innerText = '👁️';
-      document.getElementById('editUserPasswordHint').innerText = '';
-      document.getElementById('editUserModalTitle').innerText = '➕ Add New User';
-      document.getElementById('editUserModal').style.display = 'flex';
-    };
-
-    window.toggleUserPasswordVisibility = function() {
-      const inp = document.getElementById('editUserPassword');
-      const btn = document.getElementById('toggleUserPasswordBtn');
-      if (inp.type === 'password') { inp.type = 'text'; btn.innerText = '🙈'; }
-      else { inp.type = 'password'; btn.innerText = '👁️'; }
-    };
-
-    window.closeEditUserModal = function() {
-      document.getElementById('editUserModal').style.display = 'none';
-    };
-
-    // ===== EDIT USER =====
-    window.editUserModal = function(uid) {
-      const u = allData.users[uid];
-      if (!u) return showToast('❌ User not found','error');
-      document.getElementById('editUserUid').value = uid;
-      document.getElementById('editUserName').value = u.name||'';
-      document.getElementById('editUserEmail').value = u.email||'';
-      document.getElementById('editUserPhone').value = u.phone||'';
-      document.getElementById('editUserPassword').value = '';
-      document.getElementById('editUserPassword').type = 'password';
-      document.getElementById('toggleUserPasswordBtn').innerText = '👁️';
-      document.getElementById('editUserPasswordHint').innerText = u.password ? 'Khaali chhodein agar password change nahi karna' : 'Is user ka koi password set nahi hai';
-      document.getElementById('editUserModalTitle').innerText = '✏️ Edit User';
-      document.getElementById('editUserModal').style.display = 'flex';
-    };
-
-    // ===== SAVE USER (ADD/EDIT) =====
-    window.saveUserEdit = async function() {
-      const uid = document.getElementById('editUserUid').value;
-      const name = document.getElementById('editUserName').value.trim();
-      const email = document.getElementById('editUserEmail').value.trim();
-      const phone = document.getElementById('editUserPhone').value.trim();
-      const password = document.getElementById('editUserPassword').value;
-      if (!name) return showToast('❌ Name required','error');
-      if (!uid && !password) return showToast('❌ Password required','error');
-      try {
-        if (uid) {
-          // Edit existing
-          const updates = { name, email, phone };
-          if (password) updates.password = password; // keep old password if left blank
-          await update(ref(db, 'users/'+uid), updates);
-          showToast('✅ User updated!');
-        } else {
-          // Add new user
-          const newRef = push(ref(db, 'users'));
-          await set(newRef, { name, email, phone, password, role:'member' });
-          showToast('✅ New user added!');
-        }
-        closeEditUserModal();
-        setTimeout(() => showUsersModal(), 500);
-      } catch(e) { showToast('❌ '+e.message,'error'); }
-    };
-
-    // ===== DELETE USER =====
-    window.deleteUser = async function() {
-      const uid = document.getElementById('editUserUid').value;
-      if (!uid) return;
-      if (!confirm('Delete this user? This cannot be undone!')) return;
-      try {
-        await remove(ref(db, 'users/'+uid));
-        showToast('🗑️ User deleted');
-        closeEditUserModal();
-        setTimeout(() => showUsersModal(), 500);
-      } catch(e) { showToast('❌ '+e.message,'error'); }
-    };
-
-    // ===== BIDS MANAGEMENT =====
-    function renderBids() {
-      const list = document.getElementById('bidsList');
-      const bids = allData.bids || {};
-      const bidArr = Object.entries(bids).map(([id,b]) => ({id,...b})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-
-      if (bidArr.length === 0) {
-        list.innerHTML = '<div class="empty"><div class="emoji">🏷️</div><div class="text">Koi bids nahi hain</div></div>';
-        return;
-      }
-
-      // Group by cycle+month
-      let html2 = '';
-      const grouped = {};
-      bidArr.forEach(b => {
-        const key = (b.cycleId||'unknown') + '|' + (b.month||'?');
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(b);
-      });
-
-      Object.entries(grouped).forEach(([key, bids]) => {
-        const [cid, month] = key.split('|');
-        const cycle = allData.cycles[cid];
-        const cycleName = cycle ? cycle.name : cid;
-        const totalPot = cycle ? Number(cycle.monthlyAmount||0)*Number(cycle.totalMembers||0) : 0;
-        const sorted = bids.sort((a,b)=>(b.discountAmount||0)-(a.discountAmount||0));
-        const top = sorted[0];
-
-        html2 += `<div style="padding:14px 16px;border-bottom:1px solid #F0F0F0;background:${sorted.length>0?'rgba(245,158,11,0.04)':'transparent'};">`;
-        html2 += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">`;
-        html2 += `<div><strong style="font-size:0.9rem;">${cycleName}</strong><br><span style="font-size:0.7rem;color:#9B9B9B;">${month} • ${bids.length} bids</span></div>`;
-        if (top) {
-          const topPayout = Math.max(0, totalPot - Number(top.discountAmount||0));
-          const topRemaining = totalPot - topPayout;
-          const zeroWarn = topPayout <= 0 ? ' ⚠️ ₹0 Payout!' : '';
-          html2 += `<div style="text-align:right;"><span style="font-size:0.65rem;color:#9B9B9B;">Highest</span><br><strong style="color:${topPayout<=0?'#EF4444':'#F5A623'};">👑 ${top.userName||'?'} • ₹${top.discountAmount||0}${zeroWarn}</strong></div>`;
-        }
-        html2 += `</div>`;
-        // Total Pot Summary
-        html2 += `<div style="display:flex;gap:12px;margin-bottom:8px;font-size:0.7rem;color:#6B6B6B;">
-          <span>🪙 Pot: <strong style="color:#1A1A1A;">${fmtINR(totalPot)}</strong></span>
-          ${top ? `<span>💰 Winner Payout: <strong style="color:${(totalPot-Number(top.discountAmount||0))<=0?'#EF4444':'#16A34A'};">${fmtINR(Math.max(0,totalPot-Number(top.discountAmount||0)))}</strong></span>` : ''}
-          ${top ? `<span>📦 Remaining: <strong style="color:#F5A623;">${fmtINR(Math.max(0,Number(top.discountAmount||0)))}</strong> (Admin decide)</span>` : ''}
-        </div>`;
-
-        sorted.forEach(b => {
-          const s = b.status||'Active';
-          const sc = s==='Approved'?'received':s==='Rejected'?'pending':'pending';
-          const bidPayout = Math.max(0, totalPot - Number(b.discountAmount||0));
-          const isZeroPayout = (bidPayout <= 0);
-          const warnStyle = isZeroPayout ? 'background:rgba(239,68,68,0.06);' : '';
-          const approveBtn = (!isZeroPayout) ? `<button class="btn-sm btn-approve" onclick="approveBid('${b.id}')">✅</button>` : '';
-          const rejectBtn = `<button class="btn-sm btn-reject" onclick="rejectBid('${b.id}')">${isZeroPayout ? '❌ Reject (₹0)' : '❌'}</button>`;
-          html2 += `<div class="member-row" style="font-size:0.8rem;${warnStyle}">
-            <div class="member-pos" style="background:rgba(245,158,11,0.15);color:#92400E;">🏷️</div>
-            <div class="member-info">
-              <div class="member-name">${b.userName||'Unknown'} ${isZeroPayout ? '<span style="color:#EF4444;font-size:0.65rem;">⚠️ ₹0 Payout!</span>' : ''}</div>
-              <div class="member-phone">📱 ${b.userPhone||'-'} | Discount: <strong>₹${b.discountAmount||0}</strong> | Payout: <strong style="color:${isZeroPayout?'#EF4444':'#16A34A'};">₹${bidPayout.toLocaleString('en-IN')}</strong></div>
+        <!-- ===== HISTORY SECTION ===== -->
+        <div id="section-history" class="hidden">
+            <div class="card">
+                <div class="card-title">🏆 Full Payout History <span class="count" id="historyListCount">0</span></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Winner</th>
+                                <th>Phone</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyListBody"></tbody>
+                    </table>
+                </div>
             </div>
-            <div style="text-align:right;">
-              <span class="turn-badge ${sc}" style="margin-bottom:3px;display:inline-block;">${s}</span>
-              <div style="display:flex;gap:3px;justify-content:flex-end;">
-                ${approveBtn}
-                ${rejectBtn}
-              </div>
+        </div>
+
+        <!-- ===== REPORTS SECTION ===== -->
+        <div id="section-reports" class="hidden">
+            <div class="card">
+                <div class="card-title">📄 Generate Reports</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button class="pdf-btn" onclick="generateMonthlyReport()">📄 Monthly Report PDF</button>
+                    <button class="pdf-btn" onclick="generateYearlyReport()">📄 Yearly Report PDF</button>
+                    <button class="pdf-btn" onclick="generateMemberStatement()">📄 Member Statement PDF</button>
+                    <button class="whatsapp-btn" onclick="shareWhatsAppSummary()">📱 WhatsApp Summary</button>
+                </div>
             </div>
-          </div>`;
-        });
-        html2 += `</div>`;
-      });
+            <div class="card">
+                <div class="card-title">📊 Report Preview</div>
+                <div id="reportPreview" style="padding:15px;background:#f8fafc;border-radius:8px;min-height:100px;font-size:14px;white-space:pre-wrap;">
+                    Select a report to generate...
+                </div>
+            </div>
+        </div>
 
-      list.innerHTML = html2 || '<div class="empty"><div class="emoji">🏷️</div><div class="text">No bids</div></div>';
-    }
+    </div>
 
-    window.approveBid = async function(bidId) {
-      const bid = allData.bids[bidId];
-      if (!bid) return showToast('❌ Bid not found','error');
-      // Check if payout would be 0 (discount >= monthly pot)
-      const cycle = allData.cycles[bid.cycleId];
-      if (cycle) {
-        const totalPot = Number(cycle.monthlyAmount||0) * Number(cycle.totalMembers||0);
-        const discount = Number(bid.discountAmount||0);
-        if (discount >= totalPot) {
-          return showToast('❌ Cannot approve: Payout would be ₹0! Reject this bid instead.','error');
+    <!-- ===== TOAST ===== -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================================
+        // FIREBASE CONFIG
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDT1Gl3Z_mLFaY6i0e01TKX3YUtVrplew8",
+            authDomain: "my-hellping.firebaseapp.com",
+            databaseURL: "https://my-hellping-default-rtdb.firebaseio.com",
+            projectId: "my-hellping",
+            storageBucket: "my-hellping.firebasestorage.app",
+            messagingSenderId: "537498438505",
+            appId: "1:537498438505:web:204dc1653c612edc75cbf8"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // ============================================================
+        // STATE
+        // ============================================================
+        let members = [];
+        let history = [];
+        let currentSection = 'dashboard';
+
+        // ============================================================
+        // TOAST NOTIFICATION
+        // ============================================================
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => toast.classList.remove('show'), 3500);
         }
-      }
-      try { await update(ref(db, 'bids/'+bidId), {status:'Approved'}); showToast('✅ Bid approved!'); }
-      catch(e) { showToast('❌ '+e.message,'error'); }
-    };
-    window.rejectBid = async function(bidId) {
-      try { await update(ref(db, 'bids/'+bidId), {status:'Rejected'}); showToast('❌ Bid rejected'); }
-      catch(e) { showToast('❌ '+e.message,'error'); }
-    };
 
-    // Navigate to payments with filter
-    window.navigateToPaymentsFilter = function(filter) {
-      paymentFilter = filter;
-      navigate('payments');
-      // Update active tab buttons
-      setTimeout(() => {
-        document.querySelectorAll('#page-payments .tabs button').forEach(b => {
-          b.classList.remove('active');
-          if ((filter === 'all' && b.innerText.includes('All')) ||
-              (filter === 'Approved' && b.innerText.includes('Approved')) ||
-              (filter === 'Pending' && b.innerText.includes('Pending'))) {
-            b.classList.add('active');
-          }
-        });
-      }, 100);
-    };
+        // ============================================================
+        // SIDEBAR
+        // ============================================================
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
 
-    // ===== BANK =====
-    function fillBankForm() {
-      const bd = allData.bankDetails||{};
-      document.getElementById('bankUpi').value = bd.upi||'';
-      document.getElementById('bankAccName').value = bd.accName||'';
-      document.getElementById('bankAccNo').value = bd.accNo||'';
-      document.getElementById('bankIfsc').value = bd.ifsc||'';
-    }
-    document.getElementById('bankForm').addEventListener('submit', async(e) => {
-      e.preventDefault();
-      try {
-        await set(ref(db, 'bankDetails'), {
-          upi: document.getElementById('bankUpi').value,
-          accName: document.getElementById('bankAccName').value,
-          accNo: document.getElementById('bankAccNo').value,
-          ifsc: document.getElementById('bankIfsc').value
-        });
-        showToast('✅ Bank details saved!');
-      } catch(err) { showToast('❌ '+err.message,'error'); }
-    });
-  </script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b"}' crossorigin="anonymous"></script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b"}' crossorigin="anonymous"></script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b"}' crossorigin="anonymous"></script>
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('show');
+        }
+
+        function navigateTo(section) {
+            currentSection = section;
+            closeSidebar();
+
+            document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(`section-${section}`);
+            if (target) target.classList.remove('hidden');
+
+            const titles = {
+                dashboard: '📊 Admin Dashboard',
+                members: '👥 Members',
+                history: '🏆 History',
+                reports: '📄 Reports'
+            };
+            document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
+
+            document.querySelectorAll('.sidebar-nav a').forEach(el => el.classList.remove('active'));
+            const links = document.querySelectorAll('.sidebar-nav a');
+            const sectionMap = { dashboard: 0, members: 1, history: 2, reports: 3 };
+            if (sectionMap[section] !== undefined && links[sectionMap[section]]) {
+                links[sectionMap[section]].classList.add('active');
+            }
+
+            if (section === 'members') renderMembersSection();
+            if (section === 'history') renderHistorySection();
+            if (section === 'reports') renderReportsSection();
+            if (section === 'dashboard') render();
+        }
+
+        // ============================================================
+        // FIREBASE - REAL-TIME LISTENERS
+        // ============================================================
+        function listenMembers() {
+            database.ref('members').on('value', (snapshot) => {
+                const data = snapshot.val();
+                members = data ? Object.values(data) : [];
+                // Sort by id
+                members.sort((a, b) => (a.id || 0) - (b.id || 0));
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                updateSidebarCounts();
+                if (currentSection === 'dashboard' || currentSection === 'members') {
+                    render();
+                }
+                if (currentSection === 'members') renderMembersSection();
+                if (currentSection === 'reports') renderReportsSection();
+            }, (error) => {
+                console.error('Error loading members:', error);
+                showToast('❌ Data load nahi ho paaya!', 'error');
+                document.getElementById('loadingIndicator').classList.add('hidden');
+            });
+        }
+
+        function listenHistory() {
+            database.ref('history').on('value', (snapshot) => {
+                const data = snapshot.val();
+                history = data ? Object.values(data) : [];
+                history.sort((a, b) => (a.id || 0) - (b.id || 0));
+                updateSidebarCounts();
+                if (currentSection === 'dashboard' || currentSection === 'history') {
+                    render();
+                }
+                if (currentSection === 'history') renderHistorySection();
+                if (currentSection === 'reports') renderReportsSection();
+            }, (error) => {
+                console.error('Error loading history:', error);
+            });
+        }
+
+        // ============================================================
+        // UPDATE SIDEBAR COUNTS
+        // ============================================================
+        function updateSidebarCounts() {
+            document.getElementById('sideMemberCount').textContent = members.length;
+            document.getElementById('sideHistoryCount').textContent = history.length;
+        }
+
+        // ============================================================
+        // ONLINE STATUS
+        // ============================================================
+        function updateOnlineStatus() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            if (navigator.onLine) {
+                dot.className = 'online-status online';
+                text.textContent = 'Online';
+            } else {
+                dot.className = 'online-status offline';
+                text.textContent = 'Offline';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // ============================================================
+        // ADMIN: ADD MEMBER
+        // ============================================================
+        function addMember() {
+            const name = document.getElementById('mName').value.trim();
+            const phone = document.getElementById('mPhone').value.trim();
+            const kist = parseFloat(document.getElementById('mKist').value);
+
+            if (!name || isNaN(kist) || kist <= 0) {
+                showToast('❌ Kripya sahi naam aur kist (₹) daalein!', 'error');
+                return;
+            }
+
+            if (members.some(m => m.name.toLowerCase() === name.toLowerCase() && m.phone === phone)) {
+                showToast('⚠️ Ye member already exist karta hai!', 'error');
+                return;
+            }
+
+            const newMember = {
+                id: Date.now(),
+                name,
+                phone: phone || 'N/A',
+                kist,
+                paidThisMonth: false,
+                hasWon: false,
+                createdAt: new Date().toISOString()
+            };
+
+            database.ref('members/' + newMember.id).set(newMember)
+                .then(() => {
+                    showToast(`✅ ${name} ko successfully add kar diya!`, 'success');
+                    document.getElementById('mName').value = '';
+                    document.getElementById('mPhone').value = '';
+                    document.getElementById('mKist').value = '';
+                })
+                .catch((error) => {
+                    showToast('❌ Error: ' + error.message, 'error');
+                });
+        }
+
+        // ============================================================
+        // ADMIN: TOGGLE PAYMENT
+        // ============================================================
+        function togglePayment(id) {
+            const m = members.find(x => x.id === id);
+            if (!m) return;
+
+            const newStatus = !m.paidThisMonth;
+            database.ref('members/' + id + '/paidThisMonth').set(newStatus)
+                .then(() => {
+                    if (newStatus) {
+                        showToast(`✅ ${m.name} ne payment kar diya!`, 'success');
+                    } else {
+                        showToast(`↩️ ${m.name} ka payment unmark kar diya`, 'warning');
+                    }
+                })
+                .catch((error) => {
+                    showToast('❌ Error: ' + error.message, 'error');
+                });
+        }
+
+        // ============================================================
+        // ADMIN: DELETE MEMBER
+        // ============================================================
+        function deleteMember(id) {
+            const m = members.find(x => x.id === id);
+            if (!m) return;
+            if (confirm(`Kya aap ${m.name} ko hatana chahte hain?`)) {
+                database.ref('members/' + id).remove()
+                    .then(() => {
+                        showToast(`🗑️ ${m.name} ko hata diya gaya!`, 'success');
+                    })
+                    .catch((error) => {
+                        showToast('❌ Error: ' + error.message, 'error');
+                    });
+            }
+        }
+
+        // ============================================================
+        // ADMIN: RELEASE POOL
+        // ============================================================
+        function releasePool() {
+            const winnerId = parseInt(document.getElementById('winnerSelect').value);
+            if (!winnerId) {
+                showToast('❌ Kripya winner chunein!', 'error');
+                return;
+            }
+
+            const winner = members.find(m => m.id === winnerId);
+            if (!winner) {
+                showToast('❌ Winner nahi mila!', 'error');
+                return;
+            }
+
+            const allPaid = members.every(m => m.paidThisMonth);
+            if (!allPaid) {
+                showToast('⚠️ Sabhi members ne payment nahi kiya! Pool release nahi ho sakta.', 'error');
+                return;
+            }
+
+            const totalPool = members.reduce((sum, m) => sum + m.kist, 0);
+
+            const historyEntry = {
+                id: Date.now(),
+                winnerName: winner.name,
+                winnerPhone: winner.phone,
+                amount: totalPool,
+                date: new Date().toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+            };
+
+            // Add to history
+            database.ref('history/' + historyEntry.id).set(historyEntry)
+                .then(() => {
+                    // Mark winner as won
+                    database.ref('members/' + winner.id + '/hasWon').set(true)
+                        .then(() => {
+                            // Reset all payments
+                            const updates = {};
+                            members.forEach(m => {
+                                updates['members/' + m.id + '/paidThisMonth'] = false;
+                            });
+                            return database.ref().update(updates);
+                        })
+                        .then(() => {
+                            showToast(`🎉 ${winner.name} ko ₹${totalPool} ka Pool mil gaya!`, 'success');
+                            shareWinnerReceipt(winner, totalPool);
+                        })
+                        .catch((error) => {
+                            showToast('❌ Error: ' + error.message, 'error');
+                        });
+                })
+                .catch((error) => {
+                    showToast('❌ Error: ' + error.message, 'error');
+                });
+        }
+
+        // ============================================================
+        // WHATSAPP: SHARE WINNER RECEIPT
+        // ============================================================
+        function shareWinnerReceipt(winner, amount) {
+            const msg = `🎉 *GAO COMMITTEE - WINNER ANNOUNCEMENT* 🎉
+
+🏆 *Winner:* ${winner.name}
+📱 *Phone:* ${winner.phone}
+💰 *Pool Amount:* ₹${amount}
+📅 *Date:* ${new Date().toLocaleDateString('hi-IN')}
+
+✅ *Status:* Pool successfully distributed!
+
+🙏 *Congratulations!* 🎊
+
+---
+📜 Gao Committee Bahi-Khata`;
+
+            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+            navigator.clipboard.writeText(msg).then(() => {
+                showToast('📋 Message copied! WhatsApp pe share karein.', 'success');
+            }).catch(() => {});
+        }
+
+        // ============================================================
+        // WHATSAPP: SHARE SUMMARY
+        // ============================================================
+        function shareWhatsAppSummary() {
+            const total = members.length;
+            const paid = members.filter(m => m.paidThisMonth).length;
+            const pending = total - paid;
+            const totalPool = members.reduce((sum, m) => sum + (m.paidThisMonth ? m.kist : 0), 0);
+            const expectedPool = members.reduce((sum, m) => sum + m.kist, 0);
+
+            let msg = `📊 *GAO COMMITTEE - MONTHLY SUMMARY* 📊
+
+📅 *Date:* ${new Date().toLocaleDateString('hi-IN')}
+
+👥 *Total Members:* ${total}
+✅ *Paid:* ${paid}
+⏳ *Pending:* ${pending}
+
+💰 *Total Pool Collected:* ₹${totalPool}
+🎯 *Expected Pool:* ₹${expectedPool}
+
+---`;
+
+            members.forEach(m => {
+                const status = m.paidThisMonth ? '✅ PAID' : '⏳ PENDING';
+                msg += `\n${m.name} (${m.phone}) - ₹${m.kist} - ${status}`;
+            });
+
+            msg += `\n---\n📜 Gao Committee Bahi-Khata`;
+
+            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+            navigator.clipboard.writeText(msg).then(() => {
+                showToast('📋 Message copied! WhatsApp pe share karein.', 'success');
+            }).catch(() => {});
+        }
+
+        // ============================================================
+        // PDF GENERATION
+        // ============================================================
+        function generateMonthlyReport() {
+            const month = new Date().toLocaleString('hi-IN', { month: 'long', year: 'numeric' });
+            let html = `
+                <div style="font-family:Arial;padding:30px;max-width:800px;margin:auto;">
+                    <h1 style="color:#1e3a8a;text-align:center;">📜 Gao Committee Bahi-Khata</h1>
+                    <h2 style="text-align:center;color:#333;">Monthly Report - ${month}</h2>
+                    <hr style="margin:20px 0;"/>
+                    <table style="width:100%;border-collapse:collapse;margin:15px 0;">
+                        <tr><th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">#</th>
+                        <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Member</th>
+                        <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Phone</th>
+                        <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Kist (₹)</th>
+                        <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Status</th></tr>
+            `;
+
+            members.forEach((m, i) => {
+                const status = m.paidThisMonth ? '✅ PAID' : '⏳ PENDING';
+                html += `<tr>
+                    <td style="border:1px solid #ddd;padding:8px;">${i+1}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${m.name} ${m.hasWon ? '🏆' : ''}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${m.phone}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">₹${m.kist}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${status}</td>
+                </tr>`;
+            });
+
+            const totalPool = members.reduce((sum, m) => sum + (m.paidThisMonth ? m.kist : 0), 0);
+            const expectedPool = members.reduce((sum, m) => sum + m.kist, 0);
+            const paid = members.filter(m => m.paidThisMonth).length;
+
+            html += `
+                    </table>
+                    <div style="margin:20px 0;padding:15px;background:#f0f4ff;border-radius:8px;">
+                        <p><strong>📊 Summary:</strong></p>
+                        <p>Total Members: ${members.length} | Paid: ${paid} | Pending: ${members.length - paid}</p>
+                        <p>Pool Collected: ₹${totalPool} / ₹${expectedPool}</p>
+                    </div>
+                    <hr/>
+                    <p style="text-align:center;color:#888;font-size:12px;">
+                        Generated on ${new Date().toLocaleString()} | Gao Committee Bahi-Khata
+                    </p>
+                </div>
+            `;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 500);
+            showToast('📄 Monthly Report PDF generating...', 'success');
+        }
+
+        function generateYearlyReport() {
+            const year = new Date().getFullYear();
+            let html = `
+                <div style="font-family:Arial;padding:30px;max-width:800px;margin:auto;">
+                    <h1 style="color:#1e3a8a;text-align:center;">📜 Gao Committee Bahi-Khata</h1>
+                    <h2 style="text-align:center;color:#333;">Yearly Report - ${year}</h2>
+                    <hr style="margin:20px 0;"/>
+                    <h3>🏆 Payout History</h3>
+            `;
+
+            if (history.length === 0) {
+                html += `<p>No history available.</p>`;
+            } else {
+                html += `<table style="width:100%;border-collapse:collapse;margin:10px 0;">
+                    <tr><th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">#</th>
+                    <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Winner</th>
+                    <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Amount (₹)</th>
+                    <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Date</th></tr>`;
+                history.forEach((h, i) => {
+                    html += `<tr>
+                        <td style="border:1px solid #ddd;padding:8px;">${i+1}</td>
+                        <td style="border:1px solid #ddd;padding:8px;">${h.winnerName}</td>
+                        <td style="border:1px solid #ddd;padding:8px;">₹${h.amount}</td>
+                        <td style="border:1px solid #ddd;padding:8px;">${h.date || 'N/A'}</td>
+                    </tr>`;
+                });
+                html += `</table>`;
+            }
+
+            const totalDistributed = history.reduce((sum, h) => sum + h.amount, 0);
+            html += `
+                    <div style="margin:20px 0;padding:15px;background:#f0f4ff;border-radius:8px;">
+                        <p><strong>📊 Yearly Summary:</strong></p>
+                        <p>Total Members: ${members.length}</p>
+                        <p>Total Pool Distributed: ₹${totalDistributed}</p>
+                        <p>Number of Payouts: ${history.length}</p>
+                    </div>
+                    <hr/>
+                    <p style="text-align:center;color:#888;font-size:12px;">
+                        Generated on ${new Date().toLocaleString()} | Gao Committee Bahi-Khata
+                    </p>
+                </div>
+            `;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 500);
+            showToast('📄 Yearly Report PDF generating...', 'success');
+        }
+
+        function generateMemberStatement() {
+            const memberName = prompt('Kis member ka statement chahiye? (Naam daalein)');
+            if (!memberName) return;
+
+            const member = members.find(m => m.name.toLowerCase() === memberName.toLowerCase());
+            if (!member) {
+                showToast('❌ Member nahi mila!', 'error');
+                return;
+            }
+
+            const html = `
+                <div style="font-family:Arial;padding:30px;max-width:600px;margin:auto;">
+                    <h1 style="color:#1e3a8a;text-align:center;">📜 Gao Committee Bahi-Khata</h1>
+                    <h2 style="text-align:center;color:#333;">Member Statement</h2>
+                    <hr style="margin:20px 0;"/>
+                    <p><strong>Name:</strong> ${member.name}</p>
+                    <p><strong>Phone:</strong> ${member.phone}</p>
+                    <p><strong>Monthly Kist:</strong> ₹${member.kist}</p>
+                    <p><strong>Status:</strong> ${member.paidThisMonth ? '✅ PAID' : '⏳ PENDING'}</p>
+                    <p><strong>Has Won:</strong> ${member.hasWon ? '🏆 Yes' : '❌ No'}</p>
+                    <hr/>
+                    <p style="text-align:center;color:#888;font-size:12px;">
+                        Generated on ${new Date().toLocaleString()} | Gao Committee Bahi-Khata
+                    </p>
+                </div>
+            `;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 500);
+            showToast(`📄 ${member.name} ka statement generating...`, 'success');
+        }
+
+        // ============================================================
+        // RENDER ENGINE
+        // ============================================================
+        function render() {
+            const total = members.length;
+            const paid = members.filter(m => m.paidThisMonth).length;
+            const pending = total - paid;
+            const won = members.filter(m => m.hasWon).length;
+            const totalPaidAmount = members.reduce((sum, m) => sum + (m.paidThisMonth ? m.kist : 0), 0);
+            const expectedTotal = members.reduce((sum, m) => sum + m.kist, 0);
+            const allPaid = total > 0 && members.every(m => m.paidThisMonth);
+
+            // Stats
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statPaid').textContent = paid;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statWon').textContent = won;
+            document.getElementById('adminMemberCount').textContent = total;
+            document.getElementById('adminHistoryCount').textContent = history.length;
+
+            // Pool
+            document.getElementById('totalPoolDisplay').innerHTML =
+                `₹${totalPaidAmount} <span style="font-size:16px;opacity:0.7;">/ ₹${expectedTotal}</span>`;
+
+            const poolStatus = document.getElementById('poolStatusText');
+            const payoutBtn = document.getElementById('payoutBtn');
+            const payoutStatus = document.getElementById('payoutStatus');
+
+            if (allPaid && total > 0) {
+                poolStatus.innerHTML = '✅ Sabhi members ne pay kar diya! Pool ready hai.';
+                poolStatus.style.color = '#4ade80';
+                payoutBtn.disabled = false;
+                payoutBtn.textContent = '🎯 Release Pool Now';
+                payoutStatus.textContent = '✅ Pool release ke liye ready!';
+                payoutStatus.style.color = '#15803d';
+            } else {
+                poolStatus.innerHTML = `⏳ ${pending} members ne abhi payment nahi kiya.`;
+                poolStatus.style.color = '#fcd34d';
+                payoutBtn.disabled = true;
+                payoutBtn.textContent = '🔒 Pool Release (Payment Pending)';
+                payoutStatus.textContent = `⏳ ${pending} members pending. Pool release nahi hoga.`;
+                payoutStatus.style.color = '#94a3b8';
+            }
+
+            // Winner Dropdown
+            const winnerSelect = document.getElementById('winnerSelect');
+            const eligible = members.filter(m => !m.hasWon);
+            winnerSelect.innerHTML = '<option value="">-- Select Winner --</option>';
+            eligible.forEach(m => {
+                winnerSelect.innerHTML += `<option value="${m.id}">${m.name} (${m.phone}) - ₹${m.kist}</option>`;
+            });
+            if (eligible.length === 0 && total > 0) {
+                winnerSelect.innerHTML += '<option value="" disabled>🎉 Sabhi members jeet chuke hain!</option>';
+            }
+
+            // Admin Members Table
+            const adminBody = document.getElementById('adminMembersBody');
+            if (total === 0) {
+                adminBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No members found.</td></tr>';
+            } else {
+                adminBody.innerHTML = members.map((m, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><strong>${m.name}</strong> ${m.hasWon ? '🏆' : ''}</td>
+                        <td>${m.phone}</td>
+                        <td>₹${m.kist}</td>
+                        <td><span class="badge-status ${m.paidThisMonth ? 'paid' : 'pending'}">${m.paidThisMonth ? '✅ PAID' : '⏳ PENDING'}</span></td>
+                        <td class="no-print">
+                            <div class="action-group">
+                                <button class="btn-sm ${m.paidThisMonth ? 'unpay' : 'pay'}" onclick="togglePayment(${m.id})">
+                                    ${m.paidThisMonth ? '↩️ Unpay' : '✅ Pay'}
+                                </button>
+                                <button class="btn-sm del" onclick="deleteMember(${m.id})">🗑️ Del</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // Admin History
+            const adminHistoryBody = document.getElementById('adminHistoryBody');
+            if (history.length === 0) {
+                adminHistoryBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No history yet.</td></tr>';
+            } else {
+                adminHistoryBody.innerHTML = history.map((h, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><strong>🏆 ${h.winnerName}</strong></td>
+                        <td>${h.winnerPhone || 'N/A'}</td>
+                        <td>₹${h.amount}</td>
+                        <td>${h.date || 'N/A'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            updateSidebarCounts();
+        }
+
+        // ============================================================
+        // SECTION RENDERERS
+        // ============================================================
+        function renderMembersSection() {
+            const body = document.getElementById('memberListBody');
+            document.getElementById('memberListCount').textContent = members.length;
+
+            if (members.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No members found.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = members.map((m, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><strong>${m.name}</strong> ${m.hasWon ? '🏆' : ''}</td>
+                    <td>${m.phone}</td>
+                    <td>₹${m.kist}</td>
+                    <td><span class="badge-status ${m.paidThisMonth ? 'paid' : 'pending'}">${m.paidThisMonth ? '✅ PAID' : '⏳ PENDING'}</span></td>
+                    <td>${m.hasWon ? '🏆 Yes' : '❌ No'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderHistorySection() {
+            const body = document.getElementById('historyListBody');
+            document.getElementById('historyListCount').textContent = history.length;
+
+            if (history.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No history yet.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = history.map((h, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><strong>🏆 ${h.winnerName}</strong></td>
+                    <td>${h.winnerPhone || 'N/A'}</td>
+                    <td>₹${h.amount}</td>
+                    <td>${h.date || 'N/A'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderReportsSection() {
+            const preview = document.getElementById('reportPreview');
+            const total = members.length;
+            const paid = members.filter(m => m.paidThisMonth).length;
+            const totalPool = members.reduce((sum, m) => sum + (m.paidThisMonth ? m.kist : 0), 0);
+            const expectedPool = members.reduce((sum, m) => sum + m.kist, 0);
+
+            preview.innerHTML = `
+📊 *Committee Summary*
+
+👥 Total Members: ${total}
+✅ Paid This Month: ${paid}
+⏳ Pending: ${total - paid}
+🏆 Total Won: ${members.filter(m => m.hasWon).length}
+
+💰 Pool Collected: ₹${totalPool}
+🎯 Expected Pool: ₹${expectedPool}
+
+📜 Total Payouts: ${history.length}
+🏆 Last Winner: ${history.length > 0 ? history[history.length - 1].winnerName : 'N/A'}
+
+---
+📅 Report as of: ${new Date().toLocaleString()}
+            `;
+        }
+
+        // ============================================================
+        // SEED DATA - Only if empty
+        // ============================================================
+        function seedInitialData() {
+            database.ref('members').once('value', (snapshot) => {
+                if (!snapshot.exists()) {
+                    const initialMembers = [
+                        { id: 1, name: 'Ramesh Kumar', phone: '9876543210', kist: 2000, paidThisMonth: false,
+                            hasWon: false },
+                        { id: 2, name: 'Suresh Singh', phone: '9876543211', kist: 2000, paidThisMonth: false,
+                            hasWon: false },
+                        { id: 3, name: 'Priya Sharma', phone: '9876543212', kist: 2000, paidThisMonth: false,
+                            hasWon: false },
+                        { id: 4, name: 'Amit Verma', phone: '9876543213', kist: 2000, paidThisMonth: false,
+                            hasWon: false },
+                        { id: 5, name: 'Neha Gupta', phone: '9876543214', kist: 2000, paidThisMonth: false,
+                            hasWon: false }
+                    ];
+
+                    const updates = {};
+                    initialMembers.forEach(m => {
+                        updates['members/' + m.id] = m;
+                    });
+                    database.ref().update(updates)
+                        .then(() => {
+                            console.log('✅ Seed data added!');
+                        })
+                        .catch((error) => {
+                            console.error('Error seeding data:', error);
+                        });
+                }
+            });
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        function init() {
+            // Start listeners
+            listenMembers();
+            listenHistory();
+
+            // Seed data if empty
+            seedInitialData();
+
+            // Navigate to dashboard
+            navigateTo('dashboard');
+
+            console.log('✅ Admin Panel with Firebase Loaded!');
+        }
+
+        init();
+    </script>
 </body>
 </html>
