@@ -2,17 +2,15 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-    <title>📜 Admin Panel - Gao Committee</title>
-    
-    <!-- Firebase SDKs -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📜 Gram Invest - Admin Panel</title>
+
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
     </script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
     </script>
-    
+
     <style>
-        /* ===== CSS VARIABLES ===== */
         :root {
             --primary: #1e3a8a;
             --primary-light: #3b82f6;
@@ -41,7 +39,6 @@
             min-height: 100vh;
         }
 
-        /* ===== SIDEBAR ===== */
         .sidebar {
             position: fixed;
             left: 0;
@@ -112,7 +109,6 @@
             padding: 0 20px;
         }
 
-        /* ===== HAMBURGER ===== */
         .hamburger {
             display: none;
             position: fixed;
@@ -136,14 +132,12 @@
             z-index: 999;
         }
 
-        /* ===== MAIN CONTENT ===== */
         .main-content {
             margin-left: var(--sidebar-width);
             padding: 20px 25px;
             min-height: 100vh;
         }
 
-        /* ===== TOP HEADER ===== */
         .top-header {
             display: flex;
             justify-content: space-between;
@@ -178,7 +172,6 @@
             font-size: 16px;
         }
 
-        /* ===== CARDS ===== */
         .card {
             background: var(--card-bg);
             border-radius: var(--radius);
@@ -196,6 +189,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .card-title .count {
             font-size: 13px;
@@ -205,7 +200,6 @@
             color: var(--text-muted);
         }
 
-        /* ===== STATS GRID ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -241,7 +235,6 @@
             border-left-color: var(--danger);
         }
 
-        /* ===== FORMS ===== */
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr auto;
@@ -275,45 +268,18 @@
         .form-row button.danger {
             background: var(--danger);
         }
-
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr 1fr;
-            }
+        .form-row button.primary {
+            background: var(--primary);
         }
-        @media (max-width: 480px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
+        .form-row button.full-btn {
+            background: var(--warning);
+            color: #0f172a;
         }
-
-        /* ===== TABLE ===== */
-        .table-wrap {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        table th {
-            text-align: left;
-            padding: 10px 14px;
-            background: #f8fafc;
-            color: var(--text-muted);
-            font-weight: 600;
-            border-bottom: 2px solid var(--border);
-        }
-        table td {
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--border);
-            vertical-align: middle;
-        }
-        table tr:hover td {
-            background: #f8fafc;
+        .form-row button.full-btn.active {
+            background: var(--danger);
+            color: #fff;
         }
 
-        /* ===== BADGES ===== */
         .badge-status {
             padding: 4px 14px;
             border-radius: 20px;
@@ -333,8 +299,19 @@
             background: #fef3c7;
             color: #92400e;
         }
+        .badge-status.full {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-status.success {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .badge-status.rejected {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
 
-        /* ===== BUTTONS ===== */
         .btn-sm {
             padding: 5px 12px;
             border: none;
@@ -384,7 +361,6 @@
             flex-wrap: wrap;
         }
 
-        /* ===== POOL BOX ===== */
         .pool-box {
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: #fff;
@@ -402,48 +378,75 @@
             font-size: 13px;
         }
 
-        /* ===== WHATSAPP / PDF BUTTONS ===== */
-        .whatsapp-btn {
-            background: #25D366;
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
+        .table-wrap {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
             font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: 0.2s;
         }
-        .whatsapp-btn:hover {
-            background: #1da851;
-        }
-        .pdf-btn {
-            background: #dc2626;
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
+        table th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #f8fafc;
+            color: var(--text-muted);
             font-weight: 600;
-            cursor: pointer;
-            font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: 0.2s;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
         }
-        .pdf-btn:hover {
-            background: #b91c1c;
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        table tr:hover td {
+            background: #f8fafc;
         }
 
-        /* ===== HIDDEN ===== */
+        .committee-selector {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .committee-selector select {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 15px;
+            background: #fff;
+            min-width: 200px;
+        }
+        .committee-selector button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .committee-selector button:hover {
+            opacity: 0.85;
+        }
+        .committee-selector button.danger {
+            background: var(--danger);
+        }
+        .committee-selector button.full-btn {
+            background: var(--warning);
+            color: #0f172a;
+        }
+        .committee-selector button.full-btn.active {
+            background: var(--danger);
+            color: #fff;
+        }
+
         .hidden {
             display: none !important;
         }
 
-        /* ===== TOAST ===== */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -470,8 +473,10 @@
         .toast.error {
             border-left: 4px solid var(--danger);
         }
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
 
-        /* ===== LOADING ===== */
         .loading {
             text-align: center;
             padding: 40px;
@@ -495,7 +500,167 @@
             }
         }
 
-        /* ===== RESPONSIVE ===== */
+        .amount {
+            font-weight: 600;
+        }
+
+        .create-committee-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .create-committee-grid input,
+        .create-committee-grid select {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            width: 100%;
+            background: #fff;
+        }
+        .create-committee-grid .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .committee-kist-info {
+            background: #f0f4ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .committee-kist-info strong {
+            color: var(--primary);
+        }
+
+        .bank-details-card {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .bank-details-card .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .bank-details-card .label {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .bank-details-card .value {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .invest-box {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin: 10px 0;
+            border: 1.5px solid #bbf7d0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .invest-box .invest-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #15803d;
+        }
+        .invest-box .invest-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #15803d;
+        }
+        .invest-box .invest-count {
+            font-size: 13px;
+            color: #15803d;
+            opacity: 0.8;
+        }
+
+        .limit-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+        .limit-selector label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .limit-selector select {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            background: #fff;
+            min-width: 100px;
+        }
+        .limit-selector .limit-info {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-left: auto;
+        }
+
+        /* 🔥 Cycle Display */
+        .cycle-box {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin: 10px 0;
+            border: 1.5px solid #f59e0b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .cycle-box .cycle-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #92400e;
+        }
+        .cycle-box .cycle-number {
+            font-size: 22px;
+            font-weight: 700;
+            color: #92400e;
+        }
+        .cycle-box .cycle-status {
+            font-size: 13px;
+            font-weight: 600;
+            color: #92400e;
+        }
+        .cycle-progress {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .cycle-progress .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -514,17 +679,35 @@
                 padding: 15px;
                 padding-top: 75px;
             }
-            .top-header h1 {
-                font-size: 17px;
+            .form-row {
+                grid-template-columns: 1fr;
             }
             .stats-grid {
                 grid-template-columns: 1fr 1fr;
             }
-            .pool-box h2 {
-                font-size: 24px;
-            }
-            .form-row {
+            .create-committee-grid {
                 grid-template-columns: 1fr;
+            }
+            .create-committee-grid .full-width {
+                grid-column: 1;
+            }
+            .invest-box {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .limit-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .limit-selector .limit-info {
+                margin-left: 0;
+                text-align: center;
+            }
+            .cycle-box {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
             }
         }
         @media (max-width: 480px) {
@@ -535,174 +718,306 @@
             .stat-card p {
                 font-size: 18px;
             }
-            .top-header {
+            .committee-selector {
                 flex-direction: column;
                 align-items: stretch;
             }
-            table {
-                font-size: 12px;
-            }
-            table th,
-            table td {
-                padding: 6px 8px;
-            }
-            .action-group .btn-sm {
-                font-size: 10px;
-                padding: 4px 8px;
-            }
-        }
-
-        .online-status {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 6px;
-        }
-        .online-status.online {
-            background: var(--secondary);
-        }
-        .online-status.offline {
-            background: var(--danger);
         }
     </style>
 </head>
 <body>
 
-    <!-- ===== HAMBURGER ===== -->
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <!-- ===== SIDEBAR ===== -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <h2>📜 <span>Committee</span></h2>
+            <h2>💰 <span>Gram Invest</span></h2>
             <small>Admin Panel</small>
         </div>
         <div class="sidebar-nav">
             <a class="active" onclick="navigateTo('dashboard')">📊 Dashboard</a>
-            <a onclick="navigateTo('members')">👥 Members <span class="badge" id="sideMemberCount">0</span></a>
-            <a onclick="navigateTo('history')">🏆 History <span class="badge" id="sideHistoryCount">0</span></a>
-            <a onclick="navigateTo('reports')">📄 Reports</a>
-            <a href="Gam user.html" target="_blank">👤 User Panel</a>
+            <a onclick="navigateTo('payments')">💳 Payments <span class="badge" id="paymentBadge">0</span></a>
+            <a onclick="navigateTo('members')">👥 Members</a>
+            <a onclick="navigateTo('history')">🏆 History</a>
+            <a onclick="navigateTo('committees')">🏛️ Committees</a>
         </div>
-        <div class="sidebar-footer">Gao Committee v2.0</div>
+        <div class="sidebar-footer">Gram Invest v3.0</div>
     </nav>
 
-    <!-- ===== MAIN CONTENT ===== -->
-    <div class="main-content" id="mainContent">
+    <div class="main-content">
 
-        <!-- ===== TOP HEADER ===== -->
         <div class="top-header">
-            <h1 id="pageTitle">📊 Admin Dashboard</h1>
+            <h1 id="pageTitle">📊 Multi-Committee Dashboard</h1>
             <div class="user-info">
                 <span style="font-weight:500;">👑 Admin</span>
                 <span class="avatar">A</span>
-                <span style="font-size:12px;color:var(--text-muted);">
-                    <span class="online-status online" id="statusDot"></span>
-                    <span id="statusText">Online</span>
-                </span>
             </div>
         </div>
 
-        <!-- ===== DASHBOARD SECTION ===== -->
+        <!-- ===== DASHBOARD ===== -->
         <div id="section-dashboard">
 
-            <!-- Loading -->
             <div id="loadingIndicator" class="loading">
                 <div class="spinner"></div>
                 <p>⏳ Data load ho raha hai...</p>
             </div>
 
-            <!-- Pool Box -->
-            <div class="pool-box" id="poolBox">
-                <div>💰 Total Committee Pool</div>
-                <h2 id="totalPoolDisplay">₹0</h2>
-                <small id="poolStatusText">⏳ Payment pending from members</small>
+            <!-- Committee Selector -->
+            <div class="card">
+                <div class="card-title">🏛️ Select Committee</div>
+                <div class="committee-selector">
+                    <select id="committeeSelect" onchange="switchCommittee()">
+                        <option value="">-- Select Committee --</option>
+                    </select>
+                    <button onclick="showAddCommittee()">➕ New Committee</button>
+                    <button class="danger" onclick="deleteCommittee()">🗑️ Delete</button>
+                    <button id="fullCommitteeBtn" class="full-btn" onclick="toggleCommitteeFull()">
+                        📊 Set Full
+                    </button>
+                </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="stats-grid" id="statsGrid">
+            <!-- 🔥 CYCLE DISPLAY -->
+            <div class="card">
+                <div class="card-title">🔄 Cycle Status</div>
+                <div id="cycleDisplay">
+                    <div class="cycle-box">
+                        <div>
+                            <span class="cycle-label">📊 Current Cycle</span>
+                            <span class="cycle-number" id="cycleNumber">0</span>
+                        </div>
+                        <div>
+                            <span class="cycle-status" id="cycleStatus">🔄 In Progress</span>
+                        </div>
+                        <div style="width:100%;">
+                            <div class="cycle-progress">
+                                <div class="fill" id="cycleProgress" style="width:0%;"></div>
+                            </div>
+                            <small style="color:var(--text-muted);font-size:11px;" id="cycleProgressText">0/0 Members Won</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🔥 Custom Limit Selector -->
+            <div class="card">
+                <div class="card-title">⚙️ Committee Member Limit</div>
+                <div class="limit-selector">
+                    <label>📊 Max Members:</label>
+                    <select id="memberLimitSelect" onchange="updateMemberLimit()">
+                        <option value="2">2 Members</option>
+                        <option value="3">3 Members</option>
+                        <option value="5" selected>5 Members</option>
+                        <option value="10">10 Members</option>
+                        <option value="15">15 Members</option>
+                        <option value="20">20 Members</option>
+                        <option value="25">25 Members</option>
+                        <option value="30">30 Members</option>
+                        <option value="50">50 Members</option>
+                        <option value="100">100 Members</option>
+                    </select>
+                    <span class="limit-info" id="limitInfo">Current: 5 Members</span>
+                </div>
+                <small style="color:var(--text-muted);font-size:12px;display:block;margin-top:8px;">
+                    💡 Is committee mein maximum members limit set karein. Limit cross hone par "Committee Full" ho jayega.
+                </small>
+            </div>
+
+            <!-- Create Committee -->
+            <div id="addCommitteeCard" class="card hidden">
+                <div class="card-title">🏛️ Create New Committee</div>
+                <div class="create-committee-grid">
+                    <div>
+                        <label style="font-size:13px;font-weight:600;color:var(--text-muted);">📋 Committee Name</label>
+                        <input type="text" id="committeeName" placeholder="e.g., Gaon Committee">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:600;color:var(--text-muted);">👤 Admin Name</label>
+                        <input type="text" id="committeeAdmin" placeholder="e.g., Ramesh Kumar">
+                    </div>
+                    <div class="full-width">
+                        <label style="font-size:13px;font-weight:600;color:var(--text-muted);">
+                            💰 Default Kist Amount (₹)
+                        </label>
+                        <input type="number" id="committeeDefaultKist" placeholder="e.g., 2000" min="1" max="100000" value="2000">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:600;color:var(--text-muted);">👥 First Member Name</label>
+                        <input type="text" id="firstMemberName" placeholder="e.g., Suresh Singh">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:600;color:var(--text-muted);">📞 Member Phone</label>
+                        <input type="tel" id="firstMemberPhone" placeholder="e.g., 9876543210">
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:15px;flex-wrap:wrap;">
+                    <button onclick="createCommitteeWithMember()" style="background:var(--secondary);padding:12px 30px;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">
+                        ✅ Create Committee
+                    </button>
+                    <button onclick="hideAddCommittee()" style="background:var(--danger);padding:12px 30px;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">
+                        ❌ Cancel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Committee Kist Info -->
+            <div id="committeeKistInfo" class="committee-kist-info hidden">
+                <span>💰 <strong id="kistLabel">Committee Kist:</strong> <span id="kistValue">₹0</span></span>
+                <span style="font-size:12px;color:var(--text-muted);">💡 Naya member add karte time yeh kist auto-set ho jayegi</span>
+            </div>
+
+            <!-- Group User Invest -->
+            <div id="investBox" class="invest-box hidden">
+                <div>
+                    <span class="invest-label">💰 Group User Invest</span>
+                    <span class="invest-count" id="investMemberCount">0 Members</span>
+                </div>
+                <span class="invest-amount" id="investTotalAmount">₹0</span>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
                 <div class="stat-card"><h4>👥 Total Members</h4><p id="statTotal">0</p></div>
-                <div class="stat-card green"><h4>✅ Paid This Month</h4><p id="statPaid">0</p></div>
+                <div class="stat-card green"><h4>✅ Paid</h4><p id="statPaid">0</p></div>
                 <div class="stat-card yellow"><h4>⏳ Pending</h4><p id="statPending">0</p></div>
                 <div class="stat-card red"><h4>🏆 Won</h4><p id="statWon">0</p></div>
             </div>
 
+            <!-- Bank Details -->
+            <div class="card">
+                <div class="card-title">🏦 Bank Details - <span id="bankCommitteeName">Current Committee</span></div>
+                <div class="form-row" style="grid-template-columns:1fr 1fr;">
+                    <input type="text" id="bankUPI" placeholder="UPI ID (e.g., name@upi)">
+                    <input type="text" id="bankName" placeholder="Account Holder Name">
+                </div>
+                <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;margin-top:10px;">
+                    <input type="text" id="bankAccNo" placeholder="Account Number">
+                    <input type="text" id="bankIfsc" placeholder="IFSC Code">
+                    <input type="text" id="bankCycle" placeholder="Cycle (e.g., Anganwadi)">
+                </div>
+                <div class="form-row" style="grid-template-columns:1fr auto;margin-top:10px;">
+                    <input type="text" id="bankAmount" placeholder="Amount (₹)">
+                    <button onclick="saveBankDetails()">💾 Save Bank Details</button>
+                </div>
+                <small style="color:var(--text-muted);font-size:12px;display:block;margin-top:8px;">
+                    💡 Members ko payment karne ke liye ye details dikhengi.
+                </small>
+            </div>
+
+            <!-- Saved Bank Details -->
+            <div class="card">
+                <div class="card-title">📋 Saved Bank Details</div>
+                <div id="savedBankDetailsDisplay">
+                    <p style="color:var(--text-muted);">No bank details saved for this committee.</p>
+                </div>
+            </div>
+
+            <!-- Pool Box -->
+            <div class="pool-box">
+                <div>💰 Total Pool</div>
+                <h2 id="totalPoolDisplay">₹0</h2>
+                <small id="poolStatusText">⏳ Payment pending from members</small>
+            </div>
+
             <!-- Add Member -->
             <div class="card">
-                <div class="card-title">➕ Add New Member</div>
+                <div class="card-title">➕ Add Member</div>
                 <div class="form-row">
                     <input type="text" id="mName" placeholder="Full Name">
                     <input type="tel" id="mPhone" placeholder="Phone Number">
-                    <input type="number" id="mKist" placeholder="Monthly Kist (₹)">
+                    <input type="number" id="mKist" placeholder="Kist (₹)" min="1" max="100000">
                     <button onclick="addMember()">✅ Add Member</button>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:5px;">
+                    <small style="color:var(--text-muted);font-size:12px;">
+                        💡 Default kist: <span id="defaultKistDisplay">₹0</span>
+                    </small>
+                    <button onclick="setDefaultKist()" style="padding:4px 12px;font-size:12px;background:var(--primary);color:#fff;border:none;border-radius:4px;cursor:pointer;">
+                        Use Default Kist
+                    </button>
                 </div>
             </div>
 
             <!-- Release Pool -->
             <div class="card">
-                <div class="card-title">🏆 Release Committee Pool</div>
+                <div class="card-title">🏆 Release Pool</div>
                 <div class="form-row" style="grid-template-columns:1fr auto;">
                     <select id="winnerSelect">
                         <option value="">-- Select Winner --</option>
                     </select>
-                    <button id="payoutBtn" class="btn-primary" onclick="releasePool()" disabled>
-                        🔒 Pool Release
-                    </button>
+                    <button id="payoutBtn" class="btn-primary" onclick="releasePool()" disabled>🔒 Release</button>
                 </div>
                 <p id="payoutStatus" style="margin-top:10px;font-size:13px;color:var(--text-muted);">
                     ⏳ Sabhi members ka payment pending hai.
                 </p>
             </div>
 
-            <!-- Members Table -->
+            <!-- Payment Requests -->
             <div class="card">
-                <div class="card-title">👥 Members Management <span class="count" id="adminMemberCount">0</span></div>
+                <div class="card-title">💳 Payment Requests <span class="count" id="paymentCount">0</span></div>
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Kist</th>
+                                <th>Member</th>
+                                <th>Amount</th>
+                                <th>UTR</th>
                                 <th>Status</th>
-                                <th class="no-print">Actions</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="adminMembersBody">
-                            <tr>
-                                <td colspan="6" style="text-align:center;color:#94a3b8;">Loading...</td>
-                            </tr>
-                        </tbody>
+                        <tbody id="paymentsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Members Table -->
+            <div class="card">
+                <div class="card-title">👥 Members <span class="count" id="adminMemberCount">0</span></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Kist</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="adminMembersBody"></tbody>
                     </table>
                 </div>
             </div>
 
             <!-- History -->
             <div class="card">
-                <div class="card-title">🏆 Payout History <span class="count" id="adminHistoryCount">0</span></div>
+                <div class="card-title">🏆 History <span class="count" id="adminHistoryCount">0</span></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>Winner</th><th>Phone</th><th>Amount</th><th>Date</th><th>Cycle</th></tr></thead>
+                        <tbody id="adminHistoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAYMENTS SECTION ===== -->
+        <div id="section-payments" class="hidden">
+            <div class="card">
+                <div class="card-title">💳 All Payments <span class="count" id="allPaymentsCount">0</span></div>
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Winner</th>
-                                <th>Phone</th>
+                                <th>Member</th>
+                                <th>Committee</th>
                                 <th>Amount</th>
+                                <th>UTR</th>
+                                <th>Status</th>
                                 <th>Date</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="adminHistoryBody">
-                            <tr>
-                                <td colspan="5" style="text-align:center;color:#94a3b8;">Loading...</td>
-                            </tr>
-                        </tbody>
+                        <tbody id="allPaymentsBody"></tbody>
                     </table>
                 </div>
             </div>
-
         </div>
 
         <!-- ===== MEMBERS SECTION ===== -->
@@ -711,16 +1026,7 @@
                 <div class="card-title">👥 All Members <span class="count" id="memberListCount">0</span></div>
                 <div class="table-wrap">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Kist</th>
-                                <th>Status</th>
-                                <th>Won</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Kist</th><th>Status</th><th>Won</th></tr></thead>
                         <tbody id="memberListBody"></tbody>
                     </table>
                 </div>
@@ -730,46 +1036,31 @@
         <!-- ===== HISTORY SECTION ===== -->
         <div id="section-history" class="hidden">
             <div class="card">
-                <div class="card-title">🏆 Full Payout History <span class="count" id="historyListCount">0</span></div>
+                <div class="card-title">🏆 Full History <span class="count" id="historyListCount">0</span></div>
                 <div class="table-wrap">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Winner</th>
-                                <th>Phone</th>
-                                <th>Amount</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>#</th><th>Winner</th><th>Phone</th><th>Amount</th><th>Date</th><th>Cycle</th></tr></thead>
                         <tbody id="historyListBody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- ===== REPORTS SECTION ===== -->
-        <div id="section-reports" class="hidden">
+        <!-- ===== COMMITTEES SECTION ===== -->
+        <div id="section-committees" class="hidden">
             <div class="card">
-                <div class="card-title">📄 Generate Reports</div>
-                <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                    <button class="pdf-btn" onclick="generateMonthlyReport()">📄 Monthly Report PDF</button>
-                    <button class="pdf-btn" onclick="generateYearlyReport()">📄 Yearly Report PDF</button>
-                    <button class="pdf-btn" onclick="generateMemberStatement()">📄 Member Statement PDF</button>
-                    <button class="whatsapp-btn" onclick="shareWhatsAppSummary()">📱 WhatsApp Summary</button>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-title">📊 Report Preview</div>
-                <div id="reportPreview" style="padding:15px;background:#f8fafc;border-radius:8px;min-height:100px;font-size:14px;white-space:pre-wrap;">
-                    Select a report to generate...
+                <div class="card-title">🏛️ All Committees <span class="count" id="committeeListCount">0</span></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>Committee Name</th><th>Admin</th><th>Kist</th><th>Members</th><th>Cycles</th><th>Created</th><th>Status</th></tr></thead>
+                        <tbody id="committeeListBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- ===== TOAST ===== -->
     <div class="toast" id="toast"></div>
 
     <script>
@@ -792,13 +1083,50 @@
         // ============================================================
         // STATE
         // ============================================================
-        let members = [];
-        let history = [];
+        let committees = {};
+        let currentCommitteeId = null;
+        let currentMembers = [];
+        let currentHistory = [];
         let currentSection = 'dashboard';
+        let committeeDefaultKist = 0;
+        let committeeBankDetails = null;
+        let allPayments = [];
+        let isCommitteeFull = false;
+        let currentLimit = 5;
+        let currentCycle = 1;
+        let totalCycles = 0;
 
         // ============================================================
-        // TOAST NOTIFICATION
+        // UTILITY FUNCTIONS
         // ============================================================
+        function validateKist(amount) {
+            let num = parseFloat(amount);
+            if (isNaN(num) || num <= 0) return 0;
+            if (num > 100000) return 100000;
+            return Math.round(num * 100) / 100;
+        }
+
+        function formatIndianCurrency(amount) {
+            if (amount === undefined || amount === null || isNaN(amount)) return '₹0';
+            let num = parseFloat(amount);
+            if (num === 0) return '₹0';
+            num = Math.round(num * 100) / 100;
+            let str = num.toString();
+            let parts = str.split('.');
+            let whole = parts[0];
+            let decimal = parts[1] || '00';
+            let lastThree = whole.slice(-3);
+            let otherNumbers = whole.slice(0, -3);
+            if (otherNumbers !== '') {
+                lastThree = ',' + lastThree;
+            }
+            let result = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+            if (decimal) {
+                result += '.' + decimal.padEnd(2, '0');
+            }
+            return '₹' + result;
+        }
+
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -807,9 +1135,6 @@
             setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
-        // ============================================================
-        // SIDEBAR
-        // ============================================================
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('sidebarOverlay').classList.toggle('show');
@@ -823,111 +1148,564 @@
         function navigateTo(section) {
             currentSection = section;
             closeSidebar();
-
             document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById(`section-${section}`);
             if (target) target.classList.remove('hidden');
 
             const titles = {
-                dashboard: '📊 Admin Dashboard',
+                dashboard: '📊 Multi-Committee Dashboard',
+                payments: '💳 Payment Management',
                 members: '👥 Members',
                 history: '🏆 History',
-                reports: '📄 Reports'
+                committees: '🏛️ Committees'
             };
             document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
 
             document.querySelectorAll('.sidebar-nav a').forEach(el => el.classList.remove('active'));
             const links = document.querySelectorAll('.sidebar-nav a');
-            const sectionMap = { dashboard: 0, members: 1, history: 2, reports: 3 };
+            const sectionMap = { dashboard: 0, payments: 1, members: 2, history: 3, committees: 4 };
             if (sectionMap[section] !== undefined && links[sectionMap[section]]) {
                 links[sectionMap[section]].classList.add('active');
             }
 
             if (section === 'members') renderMembersSection();
             if (section === 'history') renderHistorySection();
-            if (section === 'reports') renderReportsSection();
+            if (section === 'committees') renderCommitteesSection();
+            if (section === 'payments') renderAllPayments();
             if (section === 'dashboard') render();
         }
 
         // ============================================================
-        // FIREBASE - REAL-TIME LISTENERS
+        // FIREBASE LISTENERS
         // ============================================================
-        function listenMembers() {
-            database.ref('members').on('value', (snapshot) => {
-                const data = snapshot.val();
-                members = data ? Object.values(data) : [];
-                // Sort by id
-                members.sort((a, b) => (a.id || 0) - (b.id || 0));
-                document.getElementById('loadingIndicator').classList.add('hidden');
-                updateSidebarCounts();
-                if (currentSection === 'dashboard' || currentSection === 'members') {
-                    render();
+        function listenCommittees() {
+            database.ref('committees').on('value', (snapshot) => {
+                committees = snapshot.val() || {};
+                populateCommitteeSelect();
+                if (currentCommitteeId && committees[currentCommitteeId]) {
+                    // exists
+                } else {
+                    const keys = Object.keys(committees);
+                    if (keys.length > 0) {
+                        currentCommitteeId = keys[0];
+                    } else {
+                        currentCommitteeId = null;
+                        currentMembers = [];
+                        currentHistory = [];
+                        committeeDefaultKist = 0;
+                        committeeBankDetails = null;
+                    }
                 }
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                if (currentSection === 'dashboard') render();
+                if (currentSection === 'committees') renderCommitteesSection();
+            }, (error) => {
+                console.error('Error loading committees:', error);
+                document.getElementById('loadingIndicator').classList.add('hidden');
+            });
+        }
+
+        function listenCommitteeData(committeeId) {
+            if (!committeeId) return;
+
+            database.ref(`committees/${committeeId}/info`).on('value', (snapshot) => {
+                const info = snapshot.val() || {};
+                committeeDefaultKist = info.defaultKist || 0;
+                currentLimit = info.memberLimit || 5;
+                currentCycle = info.currentCycle || 1;
+                document.getElementById('memberLimitSelect').value = currentLimit;
+                document.getElementById('limitInfo').textContent = 'Current: ' + currentLimit + ' Members';
+                updateDefaultKistDisplay();
+                document.getElementById('bankCommitteeName').textContent = info.name || 'Current Committee';
+                updateCycleDisplay();
+            });
+
+            database.ref(`committees/${committeeId}/bankDetails`).on('value', (snapshot) => {
+                committeeBankDetails = snapshot.val();
+                renderBankDetails();
+            });
+
+            database.ref(`committees/${committeeId}/members`).on('value', (snapshot) => {
+                const data = snapshot.val();
+                currentMembers = data ? Object.values(data) : [];
+                currentMembers.sort((a, b) => (a.id || 0) - (b.id || 0));
+
+                const memberCount = currentMembers.length;
+                isCommitteeFull = memberCount >= currentLimit;
+                updateFullButton();
+
+                // 🔥 Calculate total cycles
+                totalCycles = currentMembers.length;
+
+                if (currentSection === 'dashboard') render();
                 if (currentSection === 'members') renderMembersSection();
-                if (currentSection === 'reports') renderReportsSection();
-            }, (error) => {
-                console.error('Error loading members:', error);
-                showToast('❌ Data load nahi ho paaya!', 'error');
-                document.getElementById('loadingIndicator').classList.add('hidden');
-            });
-        }
 
-        function listenHistory() {
-            database.ref('history').on('value', (snapshot) => {
+                updateInvestBox();
+                updateCycleDisplay();
+            });
+
+            database.ref(`committees/${committeeId}/history`).on('value', (snapshot) => {
                 const data = snapshot.val();
-                history = data ? Object.values(data) : [];
-                history.sort((a, b) => (a.id || 0) - (b.id || 0));
-                updateSidebarCounts();
-                if (currentSection === 'dashboard' || currentSection === 'history') {
-                    render();
-                }
+                currentHistory = data ? Object.values(data) : [];
+                currentHistory.sort((a, b) => (a.id || 0) - (b.id || 0));
+                if (currentSection === 'dashboard') render();
                 if (currentSection === 'history') renderHistorySection();
-                if (currentSection === 'reports') renderReportsSection();
-            }, (error) => {
-                console.error('Error loading history:', error);
+                updateCycleDisplay();
+            });
+
+            database.ref('payments').orderByChild('committeeId').equalTo(committeeId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                allPayments = data ? Object.values(data) : [];
+                allPayments.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                const pending = allPayments.filter(p => p.status === 'pending').length;
+                document.getElementById('paymentBadge').textContent = pending;
+                document.getElementById('paymentCount').textContent = allPayments.length;
+                document.getElementById('allPaymentsCount').textContent = allPayments.length;
+
+                if (currentSection === 'dashboard') render();
+                if (currentSection === 'payments') renderAllPayments();
             });
         }
 
-        // ============================================================
-        // UPDATE SIDEBAR COUNTS
-        // ============================================================
-        function updateSidebarCounts() {
-            document.getElementById('sideMemberCount').textContent = members.length;
-            document.getElementById('sideHistoryCount').textContent = history.length;
-        }
-
-        // ============================================================
-        // ONLINE STATUS
-        // ============================================================
-        function updateOnlineStatus() {
-            const dot = document.getElementById('statusDot');
-            const text = document.getElementById('statusText');
-            if (navigator.onLine) {
-                dot.className = 'online-status online';
-                text.textContent = 'Online';
-            } else {
-                dot.className = 'online-status offline';
-                text.textContent = 'Offline';
+        function populateCommitteeSelect() {
+            const select = document.getElementById('committeeSelect');
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">-- Select Committee --</option>';
+            Object.keys(committees).forEach(key => {
+                const c = committees[key];
+                const kist = c.info?.defaultKist || 0;
+                const limit = c.info?.memberLimit || 5;
+                const members = c.members ? Object.keys(c.members).length : 0;
+                const fullStatus = members >= limit ? ' 🔒 Full' : '';
+                select.innerHTML +=
+                    `<option value="${key}">${c.info?.name || key} (${formatIndianCurrency(kist)})${fullStatus}</option>`;
+            });
+            if (currentValue && committees[currentValue]) {
+                select.value = currentValue;
+            } else if (currentCommitteeId && committees[currentCommitteeId]) {
+                select.value = currentCommitteeId;
             }
         }
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-        updateOnlineStatus();
+
+        function switchCommittee() {
+            const select = document.getElementById('committeeSelect');
+            const newId = select.value;
+            if (newId && committees[newId]) {
+                currentCommitteeId = newId;
+                listenCommitteeData(currentCommitteeId);
+                setTimeout(() => {
+                    if (currentSection === 'dashboard') render();
+                    if (currentSection === 'members') renderMembersSection();
+                    if (currentSection === 'history') renderHistorySection();
+                    if (currentSection === 'payments') renderAllPayments();
+                    updateDefaultKistDisplay();
+                    updateFullButton();
+                    updateInvestBox();
+                    updateCycleDisplay();
+                }, 300);
+                const name = committees[newId].info?.name || newId;
+                const kist = committees[newId].info?.defaultKist || 0;
+                showToast(`📂 Switched to: ${name} (${formatIndianCurrency(kist)})`, 'success');
+            }
+        }
+
+        // ============================================================
+        // 🔥 UPDATE CYCLE DISPLAY
+        // ============================================================
+        function updateCycleDisplay() {
+            const total = currentMembers.length;
+            const won = currentMembers.filter(m => m.hasWon).length;
+            const cycle = currentCycle || 1;
+
+            document.getElementById('cycleNumber').textContent = cycle;
+            document.getElementById('cycleProgress').style.width = (won / total * 100) + '%';
+            document.getElementById('cycleProgressText').textContent = won + '/' + total + ' Members Won';
+
+            if (won >= total && total > 0) {
+                document.getElementById('cycleStatus').textContent = '✅ Completed';
+                document.getElementById('cycleStatus').style.color = '#15803d';
+            } else {
+                document.getElementById('cycleStatus').textContent = '🔄 In Progress';
+                document.getElementById('cycleStatus').style.color = '#92400e';
+            }
+        }
+
+        // ============================================================
+        // UPDATE MEMBER LIMIT
+        // ============================================================
+        function updateMemberLimit() {
+            if (!currentCommitteeId) {
+                showToast('❌ Pehle committee select karein!', 'error');
+                return;
+            }
+
+            const newLimit = parseInt(document.getElementById('memberLimitSelect').value);
+            currentLimit = newLimit;
+            document.getElementById('limitInfo').textContent = 'Current: ' + newLimit + ' Members';
+
+            database.ref(`committees/${currentCommitteeId}/info/memberLimit`).set(newLimit)
+                .then(() => {
+                    showToast(`✅ Member limit updated to ${newLimit}`, 'success');
+                    const memberCount = currentMembers.length;
+                    isCommitteeFull = memberCount >= newLimit;
+                    updateFullButton();
+                    updateInvestBox();
+                    render();
+                })
+                .catch((error) => {
+                    showToast('❌ Error: ' + error.message, 'error');
+                });
+        }
+
+        // ============================================================
+        // UPDATE FULL BUTTON
+        // ============================================================
+        function updateFullButton() {
+            const btn = document.getElementById('fullCommitteeBtn');
+            const memberCount = currentMembers.length;
+            const limit = currentLimit;
+
+            if (memberCount >= limit) {
+                btn.textContent = `🔒 Full (${memberCount}/${limit})`;
+                btn.className = 'full-btn active';
+                btn.style.background = '#dc2626';
+                btn.style.color = '#fff';
+                btn.disabled = true;
+            } else {
+                btn.textContent = `📊 Set Full (${memberCount}/${limit})`;
+                btn.className = 'full-btn';
+                btn.style.background = '#f59e0b';
+                btn.style.color = '#0f172a';
+                btn.disabled = false;
+            }
+        }
+
+        // ============================================================
+        // TOGGLE COMMITTEE FULL
+        // ============================================================
+        function toggleCommitteeFull() {
+            if (!currentCommitteeId) {
+                showToast('❌ Pehle committee select karein!', 'error');
+                return;
+            }
+
+            const currentCount = currentMembers.length;
+            const limit = currentLimit;
+
+            if (currentCount >= limit) {
+                showToast(`🔒 Committee already full! (${currentCount}/${limit})`, 'warning');
+                return;
+            }
+
+            database.ref(`committees/${currentCommitteeId}/info/status`).set('full')
+                .then(() => {
+                    showToast(`✅ Committee marked as FULL! (${limit} members limit reached)`, 'success');
+                    isCommitteeFull = true;
+                    updateFullButton();
+                    updateInvestBox();
+                    render();
+                })
+                .catch((error) => {
+                    showToast('❌ Error: ' + error.message, 'error');
+                });
+        }
+
+        // ============================================================
+        // UPDATE INVEST BOX
+        // ============================================================
+        function updateInvestBox() {
+            const investBox = document.getElementById('investBox');
+            const totalInvest = currentMembers.reduce((sum, m) => sum + (m.kist || 0), 0);
+            const memberCount = currentMembers.length;
+            const limit = currentLimit;
+
+            if (memberCount > 0) {
+                document.getElementById('investTotalAmount').textContent = formatIndianCurrency(totalInvest);
+                document.getElementById('investMemberCount').textContent = memberCount + '/' + limit + ' Members';
+                investBox.classList.remove('hidden');
+            } else {
+                investBox.classList.add('hidden');
+            }
+        }
+
+        // ============================================================
+        // DEFAULT KIST DISPLAY
+        // ============================================================
+        function updateDefaultKistDisplay() {
+            const display = document.getElementById('defaultKistDisplay');
+            const kistInfo = document.getElementById('committeeKistInfo');
+            const kistValue = document.getElementById('kistValue');
+
+            if (committeeDefaultKist > 0) {
+                display.textContent = formatIndianCurrency(committeeDefaultKist);
+                kistInfo.classList.remove('hidden');
+                kistValue.textContent = formatIndianCurrency(committeeDefaultKist);
+                document.getElementById('mKist').value = committeeDefaultKist;
+            } else {
+                display.textContent = '₹0';
+                kistInfo.classList.add('hidden');
+            }
+        }
+
+        function setDefaultKist() {
+            if (committeeDefaultKist > 0) {
+                document.getElementById('mKist').value = committeeDefaultKist;
+                showToast(`✅ Default kist ${formatIndianCurrency(committeeDefaultKist)} set!`, 'success');
+            } else {
+                showToast('⚠️ Koi default kist set nahi hai!', 'warning');
+            }
+        }
+
+        // ============================================================
+        // SHOW/HIDE ADD COMMITTEE
+        // ============================================================
+        function showAddCommittee() {
+            document.getElementById('addCommitteeCard').classList.remove('hidden');
+        }
+
+        function hideAddCommittee() {
+            document.getElementById('addCommitteeCard').classList.add('hidden');
+            document.getElementById('committeeName').value = '';
+            document.getElementById('committeeAdmin').value = '';
+            document.getElementById('committeeDefaultKist').value = '2000';
+            document.getElementById('firstMemberName').value = '';
+            document.getElementById('firstMemberPhone').value = '';
+        }
+
+        // ============================================================
+        // CREATE COMMITTEE
+        // ============================================================
+        function createCommitteeWithMember() {
+            const committeeName = document.getElementById('committeeName').value.trim();
+            const adminName = document.getElementById('committeeAdmin').value.trim();
+            let defaultKist = parseFloat(document.getElementById('committeeDefaultKist').value);
+            const memberName = document.getElementById('firstMemberName').value.trim();
+            const memberPhone = document.getElementById('firstMemberPhone').value.trim();
+            const memberLimit = parseInt(document.getElementById('memberLimitSelect').value);
+
+            if (!committeeName) {
+                showToast('❌ Kripya Committee Name daalein!', 'error');
+                return;
+            }
+            if (!adminName) {
+                showToast('❌ Kripya Admin Name daalein!', 'error');
+                return;
+            }
+            if (isNaN(defaultKist) || defaultKist <= 0) {
+                showToast('❌ Kripya sahi Default Kist daalein!', 'error');
+                return;
+            }
+            if (defaultKist > 100000) {
+                showToast('⚠️ Kist ₹1,00,000 se zyada nahi ho sakti! Auto-set to ₹1,00,000', 'warning');
+                defaultKist = 100000;
+                document.getElementById('committeeDefaultKist').value = 100000;
+            }
+            if (!memberName) {
+                showToast('❌ Kripya First Member Name daalein!', 'error');
+                return;
+            }
+
+            defaultKist = Math.round(defaultKist * 100) / 100;
+
+            const id = 'committee_' + Date.now();
+
+            const memberObj = {
+                id: Date.now(),
+                name: memberName,
+                phone: memberPhone || 'N/A',
+                kist: defaultKist,
+                paidThisMonth: false,
+                hasWon: false,
+                createdAt: new Date().toISOString()
+            };
+
+            const data = {
+                info: {
+                    name: committeeName,
+                    admin: adminName,
+                    defaultKist: defaultKist,
+                    memberLimit: memberLimit,
+                    currentCycle: 1,
+                    created: new Date().toISOString(),
+                    status: 'active'
+                },
+                members: {
+                    [memberObj.id]: memberObj
+                },
+                history: {},
+                bankDetails: null
+            };
+
+            database.ref(`committees/${id}`).set(data)
+                .then(() => {
+                    showToast(`✅ Committee "${committeeName}" create! Kist: ${formatIndianCurrency(defaultKist)}`,
+                        'success');
+                    hideAddCommittee();
+                    currentCommitteeId = id;
+                    currentLimit = memberLimit;
+                    currentCycle = 1;
+                    committeeDefaultKist = defaultKist;
+                    listenCommitteeData(id);
+                    setTimeout(() => {
+                        populateCommitteeSelect();
+                        document.getElementById('committeeSelect').value = id;
+                        document.getElementById('memberLimitSelect').value = memberLimit;
+                        document.getElementById('limitInfo').textContent = 'Current: ' + memberLimit + ' Members';
+                        updateDefaultKistDisplay();
+                        updateFullButton();
+                        updateInvestBox();
+                        updateCycleDisplay();
+                    }, 500);
+                })
+                .catch((error) => {
+                    showToast('❌ Error: ' + error.message, 'error');
+                });
+        }
+
+        // ============================================================
+        // DELETE COMMITTEE
+        // ============================================================
+        function deleteCommittee() {
+            if (!currentCommitteeId) {
+                showToast('❌ Koi committee select nahi hai!', 'error');
+                return;
+            }
+
+            const name = committees[currentCommitteeId]?.info?.name || currentCommitteeId;
+            if (confirm(`Kya aap "${name}" committee ko delete karna chahte hain?`)) {
+                database.ref(`committees/${currentCommitteeId}`).remove()
+                    .then(() => {
+                        showToast(`🗑️ Committee "${name}" delete ho gaya!`, 'success');
+                        currentCommitteeId = null;
+                        currentMembers = [];
+                        currentHistory = [];
+                        committeeDefaultKist = 0;
+                        committeeBankDetails = null;
+                        document.getElementById('committeeSelect').value = '';
+                        render();
+                        updateDefaultKistDisplay();
+                        updateFullButton();
+                        updateInvestBox();
+                        updateCycleDisplay();
+                    })
+                    .catch((error) => {
+                        showToast('❌ Error: ' + error.message, 'error');
+                    });
+            }
+        }
+
+        // ============================================================
+        // SAVE BANK DETAILS
+        // ============================================================
+        function saveBankDetails() {
+            if (!currentCommitteeId) {
+                showToast('❌ Pehle committee select karein!', 'error');
+                return;
+            }
+
+            const upi = document.getElementById('bankUPI').value.trim();
+            const name = document.getElementById('bankName').value.trim();
+            const accNo = document.getElementById('bankAccNo').value.trim();
+            const ifsc = document.getElementById('bankIfsc').value.trim();
+            const cycle = document.getElementById('bankCycle').value.trim();
+            const amount = document.getElementById('bankAmount').value.trim();
+
+            if (!upi || !name || !accNo || !ifsc) {
+                showToast('❌ Kripya saari details bharein!', 'error');
+                return;
+            }
+
+            const data = {
+                upi: upi,
+                accountName: name,
+                accountNumber: accNo,
+                ifsc: ifsc,
+                cycle: cycle || 'Committee',
+                amount: amount || '0',
+                updatedAt: new Date().toISOString()
+            };
+
+            database.ref(`committees/${currentCommitteeId}/bankDetails`).set(data)
+                .then(() => {
+                    showToast('✅ Bank details saved!', 'success');
+                    committeeBankDetails = data;
+                    renderBankDetails();
+                })
+                .catch((error) => {
+                    showToast('❌ Error: ' + error.message, 'error');
+                });
+        }
+
+        function renderBankDetails() {
+            const container = document.getElementById('savedBankDetailsDisplay');
+
+            if (committeeBankDetails) {
+                container.innerHTML = `
+                    <div class="bank-details-card">
+                        <div class="row"><span class="label">🏦 Cycle:</span><span class="value">${committeeBankDetails.cycle || 'N/A'}</span></div>
+                        <div class="row"><span class="label">💰 Amount:</span><span class="value">₹${committeeBankDetails.amount || '0'}</span></div>
+                        <div class="row"><span class="label">📱 UPI:</span><span class="value">${committeeBankDetails.upi || 'N/A'}</span></div>
+                        <div class="row"><span class="label">👤 Account Holder:</span><span class="value">${committeeBankDetails.accountName || 'N/A'}</span></div>
+                        <div class="row"><span class="label">🔢 Account No:</span><span class="value">${committeeBankDetails.accountNumber || 'N/A'}</span></div>
+                        <div class="row"><span class="label">🏛️ IFSC:</span><span class="value">${committeeBankDetails.ifsc || 'N/A'}</span></div>
+                        <div class="row"><span class="label">📅 Updated:</span><span class="value">${committeeBankDetails.updatedAt ? new Date(committeeBankDetails.updatedAt).toLocaleString() : 'N/A'}</span></div>
+                    </div>
+                `;
+                document.getElementById('bankUPI').value = committeeBankDetails.upi || '';
+                document.getElementById('bankName').value = committeeBankDetails.accountName || '';
+                document.getElementById('bankAccNo').value = committeeBankDetails.accountNumber || '';
+                document.getElementById('bankIfsc').value = committeeBankDetails.ifsc || '';
+                document.getElementById('bankCycle').value = committeeBankDetails.cycle || '';
+                document.getElementById('bankAmount').value = committeeBankDetails.amount || '';
+            } else {
+                container.innerHTML = '<p style="color:var(--text-muted);">No bank details saved for this committee.</p>';
+            }
+        }
 
         // ============================================================
         // ADMIN: ADD MEMBER
         // ============================================================
         function addMember() {
-            const name = document.getElementById('mName').value.trim();
-            const phone = document.getElementById('mPhone').value.trim();
-            const kist = parseFloat(document.getElementById('mKist').value);
-
-            if (!name || isNaN(kist) || kist <= 0) {
-                showToast('❌ Kripya sahi naam aur kist (₹) daalein!', 'error');
+            if (!currentCommitteeId) {
+                showToast('❌ Pehle committee select karein!', 'error');
                 return;
             }
 
-            if (members.some(m => m.name.toLowerCase() === name.toLowerCase() && m.phone === phone)) {
+            if (currentMembers.length >= currentLimit) {
+                showToast(`🔒 Committee full hai! Maximum ${currentLimit} members allowed.`, 'error');
+                return;
+            }
+
+            const name = document.getElementById('mName').value.trim();
+            const phone = document.getElementById('mPhone').value.trim();
+            let kist = parseFloat(document.getElementById('mKist').value);
+
+            if (!name) {
+                showToast('❌ Kripya member ka naam daalein!', 'error');
+                return;
+            }
+
+            if (isNaN(kist) || kist <= 0) {
+                if (committeeDefaultKist > 0) {
+                    kist = committeeDefaultKist;
+                    document.getElementById('mKist').value = kist;
+                    showToast(`💡 Default kist ${formatIndianCurrency(kist)} use ki gayi`, 'warning');
+                } else {
+                    showToast('❌ Kripya kist amount daalein!', 'error');
+                    return;
+                }
+            }
+
+            if (kist > 100000) {
+                showToast('⚠️ Kist ₹1,00,000 se zyada nahi ho sakti! Auto-set to ₹1,00,000', 'warning');
+                kist = 100000;
+                document.getElementById('mKist').value = 100000;
+            }
+
+            kist = Math.round(kist * 100) / 100;
+
+            if (currentMembers.some(m => m.name.toLowerCase() === name.toLowerCase() && m.phone === phone)) {
                 showToast('⚠️ Ye member already exist karta hai!', 'error');
                 return;
             }
@@ -936,18 +1714,26 @@
                 id: Date.now(),
                 name,
                 phone: phone || 'N/A',
-                kist,
+                kist: kist,
                 paidThisMonth: false,
                 hasWon: false,
                 createdAt: new Date().toISOString()
             };
 
-            database.ref('members/' + newMember.id).set(newMember)
+            database.ref(`committees/${currentCommitteeId}/members/${newMember.id}`).set(newMember)
                 .then(() => {
-                    showToast(`✅ ${name} ko successfully add kar diya!`, 'success');
+                    showToast(`✅ ${name} add ho gaya! (Kist: ${formatIndianCurrency(kist)})`, 'success');
                     document.getElementById('mName').value = '';
                     document.getElementById('mPhone').value = '';
-                    document.getElementById('mKist').value = '';
+                    document.getElementById('mKist').value = committeeDefaultKist || '';
+
+                    const newCount = currentMembers.length + 1;
+                    if (newCount >= currentLimit) {
+                        showToast(`🔒 Committee full ho gaya! (${currentLimit} members)`, 'warning');
+                        updateFullButton();
+                    }
+                    totalCycles = currentMembers.length + 1;
+                    updateCycleDisplay();
                 })
                 .catch((error) => {
                     showToast('❌ Error: ' + error.message, 'error');
@@ -958,17 +1744,19 @@
         // ADMIN: TOGGLE PAYMENT
         // ============================================================
         function togglePayment(id) {
-            const m = members.find(x => x.id === id);
+            if (!currentCommitteeId) return;
+            const m = currentMembers.find(x => x.id === id);
             if (!m) return;
 
             const newStatus = !m.paidThisMonth;
-            database.ref('members/' + id + '/paidThisMonth').set(newStatus)
+            database.ref(`committees/${currentCommitteeId}/members/${id}/paidThisMonth`).set(newStatus)
                 .then(() => {
                     if (newStatus) {
-                        showToast(`✅ ${m.name} ne payment kar diya!`, 'success');
+                        showToast(`✅ ${m.name} ne pay kar diya!`, 'success');
                     } else {
-                        showToast(`↩️ ${m.name} ka payment unmark kar diya`, 'warning');
+                        showToast(`↩️ ${m.name} ka payment unmark`, 'warning');
                     }
+                    updateCycleDisplay();
                 })
                 .catch((error) => {
                     showToast('❌ Error: ' + error.message, 'error');
@@ -979,12 +1767,17 @@
         // ADMIN: DELETE MEMBER
         // ============================================================
         function deleteMember(id) {
-            const m = members.find(x => x.id === id);
+            if (!currentCommitteeId) return;
+            const m = currentMembers.find(x => x.id === id);
             if (!m) return;
+
             if (confirm(`Kya aap ${m.name} ko hatana chahte hain?`)) {
-                database.ref('members/' + id).remove()
+                database.ref(`committees/${currentCommitteeId}/members/${id}`).remove()
                     .then(() => {
-                        showToast(`🗑️ ${m.name} ko hata diya gaya!`, 'success');
+                        showToast(`🗑️ ${m.name} hata diya!`, 'success');
+                        updateFullButton();
+                        updateInvestBox();
+                        updateCycleDisplay();
                     })
                     .catch((error) => {
                         showToast('❌ Error: ' + error.message, 'error');
@@ -993,53 +1786,123 @@
         }
 
         // ============================================================
-        // ADMIN: RELEASE POOL
+        // VERIFY PAYMENT
+        // ============================================================
+        function verifyPayment(id) {
+            if (!confirm('Kya aap is payment ko SUCCESS mark karna chahte hain?')) return;
+
+            const payment = allPayments.find(p => p.id === id);
+            if (payment) {
+                const member = currentMembers.find(m => m.name === payment.memberName);
+                if (member) {
+                    database.ref(`committees/${currentCommitteeId}/members/${member.id}/paidThisMonth`).set(true);
+                }
+            }
+
+            database.ref('payments/' + id + '/status').set('success')
+                .then(() => {
+                    showToast('✅ Payment verified successfully!', 'success');
+                })
+                .catch((error) => {
+                    showToast('❌ Error: ' + error.message, 'error');
+                });
+        }
+
+        // ============================================================
+        // REJECT PAYMENT
+        // ============================================================
+        function rejectPayment(id) {
+            const reason = prompt('Reject karne ka karan (Optional):');
+            if (reason === null) return;
+
+            const updates = {
+                status: 'rejected',
+                rejectReason: reason || 'No reason provided'
+            };
+
+            database.ref('payments/' + id).update(updates)
+                .then(() => {
+                    showToast('❌ Payment rejected!', 'warning');
+                })
+                .catch((error) => {
+                    showToast('❌ Error: ' + error.message, 'error');
+                });
+        }
+
+        // ============================================================
+        // 🔥 RELEASE POOL (WITH CYCLE SYSTEM)
         // ============================================================
         function releasePool() {
+            if (!currentCommitteeId) return;
+
             const winnerId = parseInt(document.getElementById('winnerSelect').value);
             if (!winnerId) {
                 showToast('❌ Kripya winner chunein!', 'error');
                 return;
             }
 
-            const winner = members.find(m => m.id === winnerId);
+            const winner = currentMembers.find(m => m.id === winnerId);
             if (!winner) {
                 showToast('❌ Winner nahi mila!', 'error');
                 return;
             }
 
-            const allPaid = members.every(m => m.paidThisMonth);
-            if (!allPaid) {
-                showToast('⚠️ Sabhi members ne payment nahi kiya! Pool release nahi ho sakta.', 'error');
+            // 🔥 Check if winner already won
+            if (winner.hasWon) {
+                showToast(`⚠️ ${winner.name} already won this cycle!`, 'warning');
                 return;
             }
 
-            const totalPool = members.reduce((sum, m) => sum + m.kist, 0);
+            // 🔥 Check all eligible members paid (only non-won members need to pay)
+            const eligibleMembers = currentMembers.filter(m => !m.hasWon);
+            const allPaid = eligibleMembers.every(m => m.paidThisMonth);
+
+            if (!allPaid) {
+                showToast('⚠️ Sabhi remaining members ne payment nahi kiya!', 'error');
+                return;
+            }
+
+            // 🔥 Calculate pool from eligible members only
+            const totalPool = eligibleMembers.reduce((sum, m) => sum + validateKist(m.kist), 0);
+
+            // 🔥 Get current cycle number
+            const cycleNumber = currentCycle || 1;
 
             const historyEntry = {
                 id: Date.now(),
                 winnerName: winner.name,
                 winnerPhone: winner.phone,
                 amount: totalPool,
-                date: new Date().toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                date: new Date().toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+                cycle: cycleNumber
             };
 
-            // Add to history
-            database.ref('history/' + historyEntry.id).set(historyEntry)
+            database.ref(`committees/${currentCommitteeId}/history/${historyEntry.id}`).set(historyEntry)
                 .then(() => {
-                    // Mark winner as won
-                    database.ref('members/' + winner.id + '/hasWon').set(true)
+                    // 🔥 Mark winner as won
+                    database.ref(`committees/${currentCommitteeId}/members/${winner.id}/hasWon`).set(true)
                         .then(() => {
-                            // Reset all payments
+                            // 🔥 Reset payments for all members (next cycle)
                             const updates = {};
-                            members.forEach(m => {
-                                updates['members/' + m.id + '/paidThisMonth'] = false;
+                            currentMembers.forEach(m => {
+                                updates[`committees/${currentCommitteeId}/members/${m.id}/paidThisMonth`] = false;
                             });
                             return database.ref().update(updates);
                         })
                         .then(() => {
-                            showToast(`🎉 ${winner.name} ko ₹${totalPool} ka Pool mil gaya!`, 'success');
-                            shareWinnerReceipt(winner, totalPool);
+                            // 🔥 Increment cycle number
+                            const newCycle = cycleNumber + 1;
+                            database.ref(`committees/${currentCommitteeId}/info/currentCycle`).set(newCycle)
+                                .then(() => {
+                                    currentCycle = newCycle;
+                                    showToast(`🎉 ${winner.name} ko ${formatIndianCurrency(totalPool)} mil gaya! Cycle ${cycleNumber} complete!`, 'success');
+                                    shareWinnerReceipt(winner, totalPool, cycleNumber);
+                                    updateCycleDisplay();
+                                    render();
+                                })
+                                .catch((error) => {
+                                    showToast('❌ Error: ' + error.message, 'error');
+                                });
                         })
                         .catch((error) => {
                             showToast('❌ Error: ' + error.message, 'error');
@@ -1051,302 +1914,187 @@
         }
 
         // ============================================================
-        // WHATSAPP: SHARE WINNER RECEIPT
+        // WHATSAPP SHARE
         // ============================================================
-        function shareWinnerReceipt(winner, amount) {
-            const msg = `🎉 *GAO COMMITTEE - WINNER ANNOUNCEMENT* 🎉
+        function shareWinnerReceipt(winner, amount, cycle) {
+            const committeeName = committees[currentCommitteeId]?.info?.name || 'Committee';
+            const msg = `🎉 *GRAM INVEST - WINNER ANNOUNCEMENT* 🎉
 
 🏆 *Winner:* ${winner.name}
 📱 *Phone:* ${winner.phone}
-💰 *Pool Amount:* ₹${amount}
+💰 *Pool Amount:* ${formatIndianCurrency(amount)}
+🔄 *Cycle:* ${cycle}
 📅 *Date:* ${new Date().toLocaleDateString('hi-IN')}
-
-✅ *Status:* Pool successfully distributed!
-
-🙏 *Congratulations!* 🎊
 
 ---
-📜 Gao Committee Bahi-Khata`;
+📜 ${committeeName}`;
 
             const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
             window.open(url, '_blank');
             navigator.clipboard.writeText(msg).then(() => {
-                showToast('📋 Message copied! WhatsApp pe share karein.', 'success');
+                showToast('📋 Message copied!', 'success');
             }).catch(() => {});
         }
 
         // ============================================================
-        // WHATSAPP: SHARE SUMMARY
-        // ============================================================
-        function shareWhatsAppSummary() {
-            const total = members.length;
-            const paid = members.filter(m => m.paidThisMonth).length;
-            const pending = total - paid;
-            const totalPool = members.reduce((sum, m) => sum + (m.paidThisMonth ? m.kist : 0), 0);
-            const expectedPool = members.reduce((sum, m) => sum + m.kist, 0);
-
-            let msg = `📊 *GAO COMMITTEE - MONTHLY SUMMARY* 📊
-
-📅 *Date:* ${new Date().toLocaleDateString('hi-IN')}
-
-👥 *Total Members:* ${total}
-✅ *Paid:* ${paid}
-⏳ *Pending:* ${pending}
-
-💰 *Total Pool Collected:* ₹${totalPool}
-🎯 *Expected Pool:* ₹${expectedPool}
-
----`;
-
-            members.forEach(m => {
-                const status = m.paidThisMonth ? '✅ PAID' : '⏳ PENDING';
-                msg += `\n${m.name} (${m.phone}) - ₹${m.kist} - ${status}`;
-            });
-
-            msg += `\n---\n📜 Gao Committee Bahi-Khata`;
-
-            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-            window.open(url, '_blank');
-            navigator.clipboard.writeText(msg).then(() => {
-                showToast('📋 Message copied! WhatsApp pe share karein.', 'success');
-            }).catch(() => {});
-        }
-
-        // ============================================================
-        // PDF GENERATION
-        // ============================================================
-        function generateMonthlyReport() {
-            const month = new Date().toLocaleString('hi-IN', { month: 'long', year: 'numeric' });
-            let html = `
-                <div style="font-family:Arial;padding:30px;max-width:800px;margin:auto;">
-                    <h1 style="color:#1e3a8a;text-align:center;">📜 Gao Committee Bahi-Khata</h1>
-                    <h2 style="text-align:center;color:#333;">Monthly Report - ${month}</h2>
-                    <hr style="margin:20px 0;"/>
-                    <table style="width:100%;border-collapse:collapse;margin:15px 0;">
-                        <tr><th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">#</th>
-                        <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Member</th>
-                        <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Phone</th>
-                        <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Kist (₹)</th>
-                        <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Status</th></tr>
-            `;
-
-            members.forEach((m, i) => {
-                const status = m.paidThisMonth ? '✅ PAID' : '⏳ PENDING';
-                html += `<tr>
-                    <td style="border:1px solid #ddd;padding:8px;">${i+1}</td>
-                    <td style="border:1px solid #ddd;padding:8px;">${m.name} ${m.hasWon ? '🏆' : ''}</td>
-                    <td style="border:1px solid #ddd;padding:8px;">${m.phone}</td>
-                    <td style="border:1px solid #ddd;padding:8px;">₹${m.kist}</td>
-                    <td style="border:1px solid #ddd;padding:8px;">${status}</td>
-                </tr>`;
-            });
-
-            const totalPool = members.reduce((sum, m) => sum + (m.paidThisMonth ? m.kist : 0), 0);
-            const expectedPool = members.reduce((sum, m) => sum + m.kist, 0);
-            const paid = members.filter(m => m.paidThisMonth).length;
-
-            html += `
-                    </table>
-                    <div style="margin:20px 0;padding:15px;background:#f0f4ff;border-radius:8px;">
-                        <p><strong>📊 Summary:</strong></p>
-                        <p>Total Members: ${members.length} | Paid: ${paid} | Pending: ${members.length - paid}</p>
-                        <p>Pool Collected: ₹${totalPool} / ₹${expectedPool}</p>
-                    </div>
-                    <hr/>
-                    <p style="text-align:center;color:#888;font-size:12px;">
-                        Generated on ${new Date().toLocaleString()} | Gao Committee Bahi-Khata
-                    </p>
-                </div>
-            `;
-
-            const win = window.open('', '_blank');
-            win.document.write(html);
-            win.document.close();
-            setTimeout(() => win.print(), 500);
-            showToast('📄 Monthly Report PDF generating...', 'success');
-        }
-
-        function generateYearlyReport() {
-            const year = new Date().getFullYear();
-            let html = `
-                <div style="font-family:Arial;padding:30px;max-width:800px;margin:auto;">
-                    <h1 style="color:#1e3a8a;text-align:center;">📜 Gao Committee Bahi-Khata</h1>
-                    <h2 style="text-align:center;color:#333;">Yearly Report - ${year}</h2>
-                    <hr style="margin:20px 0;"/>
-                    <h3>🏆 Payout History</h3>
-            `;
-
-            if (history.length === 0) {
-                html += `<p>No history available.</p>`;
-            } else {
-                html += `<table style="width:100%;border-collapse:collapse;margin:10px 0;">
-                    <tr><th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">#</th>
-                    <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Winner</th>
-                    <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Amount (₹)</th>
-                    <th style="border:1px solid #ddd;padding:8px;background:#f0f0f0;">Date</th></tr>`;
-                history.forEach((h, i) => {
-                    html += `<tr>
-                        <td style="border:1px solid #ddd;padding:8px;">${i+1}</td>
-                        <td style="border:1px solid #ddd;padding:8px;">${h.winnerName}</td>
-                        <td style="border:1px solid #ddd;padding:8px;">₹${h.amount}</td>
-                        <td style="border:1px solid #ddd;padding:8px;">${h.date || 'N/A'}</td>
-                    </tr>`;
-                });
-                html += `</table>`;
-            }
-
-            const totalDistributed = history.reduce((sum, h) => sum + h.amount, 0);
-            html += `
-                    <div style="margin:20px 0;padding:15px;background:#f0f4ff;border-radius:8px;">
-                        <p><strong>📊 Yearly Summary:</strong></p>
-                        <p>Total Members: ${members.length}</p>
-                        <p>Total Pool Distributed: ₹${totalDistributed}</p>
-                        <p>Number of Payouts: ${history.length}</p>
-                    </div>
-                    <hr/>
-                    <p style="text-align:center;color:#888;font-size:12px;">
-                        Generated on ${new Date().toLocaleString()} | Gao Committee Bahi-Khata
-                    </p>
-                </div>
-            `;
-
-            const win = window.open('', '_blank');
-            win.document.write(html);
-            win.document.close();
-            setTimeout(() => win.print(), 500);
-            showToast('📄 Yearly Report PDF generating...', 'success');
-        }
-
-        function generateMemberStatement() {
-            const memberName = prompt('Kis member ka statement chahiye? (Naam daalein)');
-            if (!memberName) return;
-
-            const member = members.find(m => m.name.toLowerCase() === memberName.toLowerCase());
-            if (!member) {
-                showToast('❌ Member nahi mila!', 'error');
-                return;
-            }
-
-            const html = `
-                <div style="font-family:Arial;padding:30px;max-width:600px;margin:auto;">
-                    <h1 style="color:#1e3a8a;text-align:center;">📜 Gao Committee Bahi-Khata</h1>
-                    <h2 style="text-align:center;color:#333;">Member Statement</h2>
-                    <hr style="margin:20px 0;"/>
-                    <p><strong>Name:</strong> ${member.name}</p>
-                    <p><strong>Phone:</strong> ${member.phone}</p>
-                    <p><strong>Monthly Kist:</strong> ₹${member.kist}</p>
-                    <p><strong>Status:</strong> ${member.paidThisMonth ? '✅ PAID' : '⏳ PENDING'}</p>
-                    <p><strong>Has Won:</strong> ${member.hasWon ? '🏆 Yes' : '❌ No'}</p>
-                    <hr/>
-                    <p style="text-align:center;color:#888;font-size:12px;">
-                        Generated on ${new Date().toLocaleString()} | Gao Committee Bahi-Khata
-                    </p>
-                </div>
-            `;
-
-            const win = window.open('', '_blank');
-            win.document.write(html);
-            win.document.close();
-            setTimeout(() => win.print(), 500);
-            showToast(`📄 ${member.name} ka statement generating...`, 'success');
-        }
-
-        // ============================================================
-        // RENDER ENGINE
+        // RENDER
         // ============================================================
         function render() {
-            const total = members.length;
-            const paid = members.filter(m => m.paidThisMonth).length;
-            const pending = total - paid;
-            const won = members.filter(m => m.hasWon).length;
-            const totalPaidAmount = members.reduce((sum, m) => sum + (m.paidThisMonth ? m.kist : 0), 0);
-            const expectedTotal = members.reduce((sum, m) => sum + m.kist, 0);
-            const allPaid = total > 0 && members.every(m => m.paidThisMonth);
+            const total = currentMembers.length;
+            const paid = currentMembers.filter(m => m.paidThisMonth).length;
+            const won = currentMembers.filter(m => m.hasWon).length;
+            const pending = total - paid - won;
+            const limit = currentLimit;
 
-            // Stats
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statPaid').textContent = paid;
-            document.getElementById('statPending').textContent = pending;
-            document.getElementById('statWon').textContent = won;
-            document.getElementById('adminMemberCount').textContent = total;
-            document.getElementById('adminHistoryCount').textContent = history.length;
+            // 🔥 Only count eligible members (not won yet)
+            const eligibleMembers = currentMembers.filter(m => !m.hasWon);
+            const eligiblePaid = eligibleMembers.filter(m => m.paidThisMonth).length;
+            const eligibleTotal = eligibleMembers.length;
 
-            // Pool
+            let totalPaidAmount = 0;
+            let expectedTotal = 0;
+            eligibleMembers.forEach(m => {
+                const kist = validateKist(m.kist);
+                if (m.paidThisMonth) {
+                    totalPaidAmount += kist;
+                }
+                expectedTotal += kist;
+            });
+
+            const allPaid = eligibleTotal > 0 && eligibleMembers.every(m => m.paidThisMonth);
+
+            document.getElementById('statTotal').textContent = total + '/' + limit;
+            document.getElementById('statPaid').textContent = eligiblePaid + '/' + eligibleTotal;
+            document.getElementById('statPending').textContent = (eligibleTotal - eligiblePaid);
+            document.getElementById('statWon').textContent = won + '/' + total;
+            document.getElementById('adminMemberCount').textContent = total + '/' + limit;
+            document.getElementById('adminHistoryCount').textContent = currentHistory.length;
+
+            const paidFormatted = formatIndianCurrency(totalPaidAmount);
+            const expectedFormatted = formatIndianCurrency(expectedTotal);
+
             document.getElementById('totalPoolDisplay').innerHTML =
-                `₹${totalPaidAmount} <span style="font-size:16px;opacity:0.7;">/ ₹${expectedTotal}</span>`;
+                `${paidFormatted} <span style="font-size:16px;opacity:0.7;">/ ${expectedFormatted}</span>`;
 
             const poolStatus = document.getElementById('poolStatusText');
             const payoutBtn = document.getElementById('payoutBtn');
             const payoutStatus = document.getElementById('payoutStatus');
 
-            if (allPaid && total > 0) {
-                poolStatus.innerHTML = '✅ Sabhi members ne pay kar diya! Pool ready hai.';
+            if (allPaid && eligibleTotal > 0) {
+                poolStatus.innerHTML = '✅ Sabhi remaining members ne pay kar diya! Pool ready hai.';
                 poolStatus.style.color = '#4ade80';
                 payoutBtn.disabled = false;
                 payoutBtn.textContent = '🎯 Release Pool Now';
                 payoutStatus.textContent = '✅ Pool release ke liye ready!';
                 payoutStatus.style.color = '#15803d';
+            } else if (eligibleTotal === 0) {
+                poolStatus.innerHTML = '🎉 Sabhi members jeet chuke hain! Committee Complete!';
+                poolStatus.style.color = '#f59e0b';
+                payoutBtn.disabled = true;
+                payoutBtn.textContent = '✅ Committee Complete';
+                payoutStatus.textContent = '🎉 All members have won!';
+                payoutStatus.style.color = '#f59e0b';
             } else {
-                poolStatus.innerHTML = `⏳ ${pending} members ne abhi payment nahi kiya.`;
+                poolStatus.innerHTML = `⏳ ${eligibleTotal - eligiblePaid} members pending.`;
                 poolStatus.style.color = '#fcd34d';
                 payoutBtn.disabled = true;
                 payoutBtn.textContent = '🔒 Pool Release (Payment Pending)';
-                payoutStatus.textContent = `⏳ ${pending} members pending. Pool release nahi hoga.`;
+                payoutStatus.textContent = `⏳ ${eligibleTotal - eligiblePaid} members pending.`;
                 payoutStatus.style.color = '#94a3b8';
             }
 
-            // Winner Dropdown
+            // Winner Dropdown - only show eligible members (not won yet)
             const winnerSelect = document.getElementById('winnerSelect');
-            const eligible = members.filter(m => !m.hasWon);
+            const eligible = currentMembers.filter(m => !m.hasWon);
             winnerSelect.innerHTML = '<option value="">-- Select Winner --</option>';
             eligible.forEach(m => {
-                winnerSelect.innerHTML += `<option value="${m.id}">${m.name} (${m.phone}) - ₹${m.kist}</option>`;
+                winnerSelect.innerHTML += `<option value="${m.id}">${m.name} (₹${validateKist(m.kist)})</option>`;
             });
             if (eligible.length === 0 && total > 0) {
-                winnerSelect.innerHTML += '<option value="" disabled>🎉 Sabhi members jeet chuke hain!</option>';
+                winnerSelect.innerHTML += '<option value="" disabled>🎉 Sabhi jeet chuke hain!</option>';
             }
 
-            // Admin Members Table
+            // Members Table
             const adminBody = document.getElementById('adminMembersBody');
             if (total === 0) {
-                adminBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No members found.</td></tr>';
+                adminBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No members.</td></tr>';
             } else {
-                adminBody.innerHTML = members.map((m, i) => `
+                adminBody.innerHTML = currentMembers.map((m, i) => {
+                    const kist = validateKist(m.kist);
+                    return `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td><strong>${m.name}</strong> ${m.hasWon ? '🏆' : ''}</td>
+                            <td>${m.phone}</td>
+                            <td class="amount">${formatIndianCurrency(kist)}</td>
+                            <td>
+                                <span class="badge-status ${m.paidThisMonth ? 'paid' : 'pending'}">
+                                    ${m.paidThisMonth ? '✅ PAID' : '⏳ PENDING'}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="btn-sm ${m.paidThisMonth ? 'unpay' : 'pay'}" onclick="togglePayment(${m.id})">
+                                        ${m.paidThisMonth ? '↩️ Unpay' : '✅ Pay'}
+                                    </button>
+                                    <button class="btn-sm del" onclick="deleteMember(${m.id})">🗑️ Del</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // History Table with Cycle
+            const historyBody = document.getElementById('adminHistoryBody');
+            if (currentHistory.length === 0) {
+                historyBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No history.</td></tr>';
+            } else {
+                historyBody.innerHTML = currentHistory.map((h, i) => `
                     <tr>
                         <td>${i + 1}</td>
-                        <td><strong>${m.name}</strong> ${m.hasWon ? '🏆' : ''}</td>
-                        <td>${m.phone}</td>
-                        <td>₹${m.kist}</td>
-                        <td><span class="badge-status ${m.paidThisMonth ? 'paid' : 'pending'}">${m.paidThisMonth ? '✅ PAID' : '⏳ PENDING'}</span></td>
-                        <td class="no-print">
-                            <div class="action-group">
-                                <button class="btn-sm ${m.paidThisMonth ? 'unpay' : 'pay'}" onclick="togglePayment(${m.id})">
-                                    ${m.paidThisMonth ? '↩️ Unpay' : '✅ Pay'}
-                                </button>
-                                <button class="btn-sm del" onclick="deleteMember(${m.id})">🗑️ Del</button>
-                            </div>
+                        <td><strong>🏆 ${h.winnerName}</strong></td>
+                        <td>${h.winnerPhone || 'N/A'}</td>
+                        <td class="amount">${formatIndianCurrency(h.amount)}</td>
+                        <td>${h.date || 'N/A'}</td>
+                        <td><span class="badge-status paid">Cycle ${h.cycle || i+1}</span></td>
+                    </tr>
+                `).join('');
+            }
+
+            // Payment Requests Table
+            const paymentBody = document.getElementById('paymentsBody');
+            const pendingPayments = allPayments.filter(p => p.status === 'pending');
+            const completedPayments = allPayments.filter(p => p.status !== 'pending');
+            const sortedPayments = [...pendingPayments, ...completedPayments];
+
+            if (sortedPayments.length === 0) {
+                paymentBody.innerHTML =
+                '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No payment requests.</td></tr>';
+            } else {
+                paymentBody.innerHTML = sortedPayments.slice(0, 20).map((p, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><strong>${p.memberName || 'N/A'}</strong></td>
+                        <td>₹${p.amount || 0}</td>
+                        <td>${p.utr || 'N/A'}</td>
+                        <td><span class="badge-status ${p.status || 'pending'}">${(p.status || 'PENDING').toUpperCase()}</span></td>
+                        <td>
+                            ${p.status === 'pending' ? `
+                                <button class="btn-sm" style="background:var(--secondary);color:#fff;" onclick="verifyPayment('${p.id}')">✅ Approve</button>
+                                <button class="btn-sm" style="background:var(--danger);color:#fff;" onclick="rejectPayment('${p.id}')">❌ Reject</button>
+                            ` : `
+                                <span style="color:var(--text-muted);font-size:11px;">${p.status === 'success' ? '✅ Verified' : '❌ Rejected'}</span>
+                                ${p.rejectReason ? `<br><small style="color:var(--text-muted);">${p.rejectReason}</small>` : ''}
+                            `}
                         </td>
                     </tr>
                 `).join('');
             }
 
-            // Admin History
-            const adminHistoryBody = document.getElementById('adminHistoryBody');
-            if (history.length === 0) {
-                adminHistoryBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No history yet.</td></tr>';
-            } else {
-                adminHistoryBody.innerHTML = history.map((h, i) => `
-                    <tr>
-                        <td>${i + 1}</td>
-                        <td><strong>🏆 ${h.winnerName}</strong></td>
-                        <td>${h.winnerPhone || 'N/A'}</td>
-                        <td>₹${h.amount}</td>
-                        <td>${h.date || 'N/A'}</td>
-                    </tr>
-                `).join('');
-            }
-
-            updateSidebarCounts();
+            updateFullButton();
+            updateInvestBox();
+            updateCycleDisplay();
         }
 
         // ============================================================
@@ -1354,101 +2102,155 @@
         // ============================================================
         function renderMembersSection() {
             const body = document.getElementById('memberListBody');
-            document.getElementById('memberListCount').textContent = members.length;
+            document.getElementById('memberListCount').textContent = currentMembers.length + '/' + currentLimit;
 
-            if (members.length === 0) {
-                body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No members found.</td></tr>';
+            if (currentMembers.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No members.</td></tr>';
                 return;
             }
 
-            body.innerHTML = members.map((m, i) => `
-                <tr>
-                    <td>${i + 1}</td>
-                    <td><strong>${m.name}</strong> ${m.hasWon ? '🏆' : ''}</td>
-                    <td>${m.phone}</td>
-                    <td>₹${m.kist}</td>
-                    <td><span class="badge-status ${m.paidThisMonth ? 'paid' : 'pending'}">${m.paidThisMonth ? '✅ PAID' : '⏳ PENDING'}</span></td>
-                    <td>${m.hasWon ? '🏆 Yes' : '❌ No'}</td>
-                </tr>
-            `).join('');
+            body.innerHTML = currentMembers.map((m, i) => {
+                const kist = validateKist(m.kist);
+                return `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><strong>${m.name}</strong> ${m.hasWon ? '🏆' : ''}</td>
+                        <td>${m.phone}</td>
+                        <td class="amount">${formatIndianCurrency(kist)}</td>
+                        <td><span class="badge-status ${m.hasWon ? 'won' : (m.paidThisMonth ? 'paid' : 'pending')}">
+                            ${m.hasWon ? '🏆 WON' : (m.paidThisMonth ? '✅ PAID' : '⏳ PENDING')}
+                        </span></td>
+                        <td>${m.hasWon ? '🏆 Yes' : '❌ No'}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderHistorySection() {
             const body = document.getElementById('historyListBody');
-            document.getElementById('historyListCount').textContent = history.length;
+            document.getElementById('historyListCount').textContent = currentHistory.length;
 
-            if (history.length === 0) {
-                body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No history yet.</td></tr>';
+            if (currentHistory.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No history.</td></tr>';
                 return;
             }
 
-            body.innerHTML = history.map((h, i) => `
+            body.innerHTML = currentHistory.map((h, i) => `
                 <tr>
                     <td>${i + 1}</td>
                     <td><strong>🏆 ${h.winnerName}</strong></td>
                     <td>${h.winnerPhone || 'N/A'}</td>
-                    <td>₹${h.amount}</td>
+                    <td class="amount">${formatIndianCurrency(h.amount)}</td>
                     <td>${h.date || 'N/A'}</td>
+                    <td><span class="badge-status paid">Cycle ${h.cycle || i+1}</span></td>
                 </tr>
             `).join('');
         }
 
-        function renderReportsSection() {
-            const preview = document.getElementById('reportPreview');
-            const total = members.length;
-            const paid = members.filter(m => m.paidThisMonth).length;
-            const totalPool = members.reduce((sum, m) => sum + (m.paidThisMonth ? m.kist : 0), 0);
-            const expectedPool = members.reduce((sum, m) => sum + m.kist, 0);
+        function renderCommitteesSection() {
+            const body = document.getElementById('committeeListBody');
+            const keys = Object.keys(committees);
+            document.getElementById('committeeListCount').textContent = keys.length;
 
-            preview.innerHTML = `
-📊 *Committee Summary*
+            if (keys.length === 0) {
+                body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">No committees.</td></tr>';
+                return;
+            }
 
-👥 Total Members: ${total}
-✅ Paid This Month: ${paid}
-⏳ Pending: ${total - paid}
-🏆 Total Won: ${members.filter(m => m.hasWon).length}
+            body.innerHTML = keys.map((key, i) => {
+                const c = committees[key];
+                const info = c.info || { name: key, admin: 'N/A', defaultKist: 0, created: 'N/A', status: 'active',
+                    memberLimit: 5, currentCycle: 1 };
+                const memberCount = c.members ? Object.keys(c.members).length : 0;
+                const limit = info.memberLimit || 5;
+                const isFull = memberCount >= limit;
+                const wonCount = c.members ? Object.values(c.members).filter(m => m.hasWon).length : 0;
+                const cycle = info.currentCycle || 1;
+                const totalCycles = memberCount;
+                return `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><strong>${info.name}</strong> ${isFull ? '🔒' : ''}</td>
+                        <td>${info.admin}</td>
+                        <td class="amount">${formatIndianCurrency(info.defaultKist || 0)}</td>
+                        <td>${memberCount}/${limit}</td>
+                        <td>${cycle}/${totalCycles}</td>
+                        <td>${info.created ? new Date(info.created).toLocaleDateString() : 'N/A'}</td>
+                        <td><span class="badge-status ${info.status === 'active' ? 'paid' : 'pending'}">${info.status || 'active'}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
 
-💰 Pool Collected: ₹${totalPool}
-🎯 Expected Pool: ₹${expectedPool}
+        function renderAllPayments() {
+            const body = document.getElementById('allPaymentsBody');
 
-📜 Total Payouts: ${history.length}
-🏆 Last Winner: ${history.length > 0 ? history[history.length - 1].winnerName : 'N/A'}
+            if (allPayments.length === 0) {
+                body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">No payments.</td></tr>';
+                return;
+            }
 
----
-📅 Report as of: ${new Date().toLocaleString()}
-            `;
+            body.innerHTML = allPayments.slice(0, 50).map((p, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><strong>${p.memberName || 'N/A'}</strong></td>
+                    <td>${p.committeeName || 'N/A'}</td>
+                    <td>₹${p.amount || 0}</td>
+                    <td>${p.utr || 'N/A'}</td>
+                    <td><span class="badge-status ${p.status || 'pending'}">${(p.status || 'PENDING').toUpperCase()}</span></td>
+                    <td>${p.timestamp ? new Date(p.timestamp).toLocaleDateString() : 'N/A'}</td>
+                    <td>
+                        ${p.status === 'pending' ? `
+                            <button class="btn-sm" style="background:var(--secondary);color:#fff;" onclick="verifyPayment('${p.id}')">✅</button>
+                            <button class="btn-sm" style="background:var(--danger);color:#fff;" onclick="rejectPayment('${p.id}')">❌</button>
+                        ` : p.status === 'success' ? '✅ Done' : '❌ Rejected'}
+                    </td>
+                </tr>
+            `).join('');
         }
 
         // ============================================================
-        // SEED DATA - Only if empty
+        // SEED DATA
         // ============================================================
-        function seedInitialData() {
-            database.ref('members').once('value', (snapshot) => {
+        function seedData() {
+            database.ref('committees').once('value', (snapshot) => {
                 if (!snapshot.exists()) {
-                    const initialMembers = [
-                        { id: 1, name: 'Ramesh Kumar', phone: '9876543210', kist: 2000, paidThisMonth: false,
-                            hasWon: false },
-                        { id: 2, name: 'Suresh Singh', phone: '9876543211', kist: 2000, paidThisMonth: false,
-                            hasWon: false },
-                        { id: 3, name: 'Priya Sharma', phone: '9876543212', kist: 2000, paidThisMonth: false,
-                            hasWon: false },
-                        { id: 4, name: 'Amit Verma', phone: '9876543213', kist: 2000, paidThisMonth: false,
-                            hasWon: false },
-                        { id: 5, name: 'Neha Gupta', phone: '9876543214', kist: 2000, paidThisMonth: false,
-                            hasWon: false }
-                    ];
+                    const defaultKist = 2000;
+                    const id = 'committee_' + Date.now();
 
-                    const updates = {};
-                    initialMembers.forEach(m => {
-                        updates['members/' + m.id] = m;
-                    });
-                    database.ref().update(updates)
-                        .then(() => {
-                            console.log('✅ Seed data added!');
-                        })
-                        .catch((error) => {
-                            console.error('Error seeding data:', error);
-                        });
+                    const members = {
+                        1: { id: 1, name: 'Asayadev Gamango', phone: '7847853652', kist: defaultKist,
+                            paidThisMonth: false, hasWon: false },
+                        2: { id: 2, name: 'ERICKDEV', phone: '7656913601', kist: defaultKist,
+                            paidThisMonth: false, hasWon: false }
+                    };
+
+                    const data = {
+                        info: {
+                            name: 'Youth Committee',
+                            admin: 'Dev',
+                            defaultKist: defaultKist,
+                            memberLimit: 5,
+                            currentCycle: 1,
+                            created: new Date().toISOString(),
+                            status: 'active'
+                        },
+                        members: members,
+                        history: {},
+                        bankDetails: {
+                            upi: '87847853652',
+                            accountName: 'ERICKDEV',
+                            accountNumber: '708486856',
+                            ifsc: 'CNRB000839',
+                            cycle: 'Youth',
+                            amount: '2000',
+                            updatedAt: new Date().toISOString()
+                        }
+                    };
+
+                    database.ref(`committees/${id}`).set(data)
+                        .then(() => console.log('✅ Seed committee added!'))
+                        .catch((error) => console.error('Error seeding:', error));
                 }
             });
         }
@@ -1457,17 +2259,16 @@
         // INIT
         // ============================================================
         function init() {
-            // Start listeners
-            listenMembers();
-            listenHistory();
-
-            // Seed data if empty
-            seedInitialData();
-
-            // Navigate to dashboard
+            listenCommittees();
+            seedData();
             navigateTo('dashboard');
-
-            console.log('✅ Admin Panel with Firebase Loaded!');
+            console.log('✅ Gram Invest Admin Panel with Cycle System Loaded!');
+            console.log('🔧 Features:');
+            console.log('  ✅ Custom Member Limit (2, 5, 10, 15, 20, 25, 30, 50, 100)');
+            console.log('  ✅ Committee Full Button');
+            console.log('  ✅ Cycle System - Auto increment on pool release');
+            console.log('  ✅ Cycle Progress Bar');
+            console.log('  ✅ Won Members excluded from next cycles');
         }
 
         init();
